@@ -1,0 +1,348 @@
+{
+  "explorer": {
+    "triangles": 18204,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "leg-left",
+      "shin-left",
+      "leg-right",
+      "shin-right",
+      "torso",
+      "arm-left",
+      "forearm-left",
+      "arm-right",
+      "forearm-right",
+      "weapon-grip",
+      "armor",
+      "equipped-pack",
+      "head",
+      "stack"
+    ]
+  },
+  "worker-character": {
+    "triangles": 18204,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "leg-left",
+      "shin-left",
+      "leg-right",
+      "shin-right",
+      "torso",
+      "arm-left",
+      "forearm-left",
+      "arm-right",
+      "forearm-right",
+      "weapon-grip",
+      "armor",
+      "equipped-pack",
+      "head",
+      "stack"
+    ]
+  },
+  "beast-normal": {
+    "triangles": 9228,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "beast-leg-0",
+      "beast-leg-1",
+      "beast-leg-2",
+      "beast-leg-3",
+      "torso",
+      "head",
+      "jaw"
+    ]
+  },
+  "beast-alpha": {
+    "triangles": 9228,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "beast-leg-0",
+      "beast-leg-1",
+      "beast-leg-2",
+      "beast-leg-3",
+      "torso",
+      "head",
+      "jaw"
+    ]
+  },
+  "beast-brute": {
+    "triangles": 9256,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "beast-leg-0",
+      "beast-leg-1",
+      "beast-leg-2",
+      "beast-leg-3",
+      "torso",
+      "head",
+      "jaw"
+    ]
+  },
+  "beast-boss": {
+    "triangles": 9377,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "beast-leg-0",
+      "beast-leg-1",
+      "beast-leg-2",
+      "beast-leg-3",
+      "torso",
+      "head",
+      "jaw"
+    ]
+  },
+  "processor": {
+    "triangles": 14140,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "roof",
+      "saw",
+      "wheel"
+    ]
+  },
+  "canner": {
+    "triangles": 8560,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "gauge--42",
+      "gauge-42",
+      "piston"
+    ]
+  },
+  "weapon": {
+    "triangles": 14054,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "display-axe",
+      "hammer",
+      "roof"
+    ]
+  },
+  "armor": {
+    "triangles": 13918,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "needle",
+      "roof",
+      "tailor-fur"
+    ]
+  },
+  "forge": {
+    "triangles": 13956,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "hammer",
+      "roof"
+    ]
+  },
+  "worker": {
+    "triangles": 14046,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "roof"
+    ]
+  },
+  "rack": {
+    "triangles": 13984,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "depot": {
+    "triangles": 13992,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "hunter-tower": {
+    "triangles": 2404,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "turret"
+    ]
+  },
+  "drone": {
+    "triangles": 4472,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "cargo",
+      "rotor0",
+      "rotor1",
+      "rotor2",
+      "rotor3"
+    ]
+  },
+  "pine": {
+    "triangles": 7358,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "rock": {
+    "triangles": 1680,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "conveyor": {
+    "triangles": 4052,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "wheel"
+    ]
+  },
+  "machine": {
+    "triangles": 3144,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "piston"
+    ]
+  },
+  "delivery": {
+    "triangles": 3860,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "hook",
+      "pulley"
+    ]
+  },
+  "fleet": {
+    "triangles": 3548,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "radar"
+    ]
+  },
+  "hunter": {
+    "triangles": 3336,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "bow"
+    ]
+  },
+  "beacon": {
+    "triangles": 3044,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "dish"
+    ]
+  },
+  "heater": {
+    "triangles": 4228,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-raw": {
+    "triangles": 1228,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-cuts": {
+    "triangles": 324,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-goods": {
+    "triangles": 652,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-cash": {
+    "triangles": 648,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-pack": {
+    "triangles": 2520,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-armor": {
+    "triangles": 1312,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-axe": {
+    "triangles": 860,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-axe3": {
+    "triangles": 1136,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-fur": {
+    "triangles": 1340,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-ore": {
+    "triangles": 336,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "item-core": {
+    "triangles": 336,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "fence-panel": {
+    "triangles": 2532,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "fence-post": {
+    "triangles": 1212,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "gate-panel": {
+    "triangles": 2012,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": []
+  },
+  "refuge": {
+    "triangles": 14054,
+    "mesh": true,
+    "occlusionSamples": 16,
+    "joints": [
+      "roof"
+    ]
+  }
+}

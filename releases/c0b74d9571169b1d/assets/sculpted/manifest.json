@@ -137,7 +137,7 @@
     ]
   },
   "armor": {
-    "triangles": 13988,
+    "triangles": 14112,
     "mesh": true,
     "occlusionSamples": 16,
     "revision": "keyart-v16",
@@ -314,7 +314,7 @@
     "joints": []
   },
   "item-armor": {
-    "triangles": 1312,
+    "triangles": 1460,
     "mesh": true,
     "occlusionSamples": 16,
     "revision": "keyart-v16",

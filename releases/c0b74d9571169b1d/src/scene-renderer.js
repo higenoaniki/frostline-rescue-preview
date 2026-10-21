@@ -25,7 +25,7 @@ import { beastAttackTime } from './actor-animation.js';
 import { updateFacilityMotion, facilityJoints } from './facility-animation.js';
 import { FrameBudget, FrameMeasurement } from './frame-budget.js';
 import { MotionDiagnostics } from './motion-diagnostics.js';
-import { buildAlpineLandscape } from './alpine-landscape.js';
+import { buildAlpineLandscape, iceOutcrop } from './alpine-landscape.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
@@ -145,8 +145,7 @@ export class ThreeGameRenderer {
     for (let i = 0; i < 11; i++) {
       const angle = Math.PI + i / 10 * Math.PI, x = Math.cos(angle) * 420, z = Math.sin(angle) * 360;
       a.ball(arena, 68, 28, 50, 'snow', x, 18, z);
-      const crystal = a.mesh(arena, a.cached('ice-cliff', () => new THREE.ConeGeometry(36, 150, 5)), 'glass', x, 94 + i % 3 * 25, z);
-      crystal.rotation.z = Math.cos(angle) * -0.2; crystal.rotation.x = Math.sin(angle) * 0.15;
+      iceOutcrop(a,arena,x,z,105+i%3*19,125+i%3*32,angle);
     }
     terrain.add(arena);
     const refuge = new THREE.Group(); refuge.position.set(toX(REFUGE_POSITION.x), 0, toZ(REFUGE_POSITION.y));
@@ -164,8 +163,7 @@ export class ThreeGameRenderer {
     for (let i = 0; i < 16; i++) {
       const x = i % 2 ? 1810 : 190, y = 250 + Math.floor(i / 2) * 390;
       for (let j = 0; j < 3; j++) {
-        const crystal = a.mesh(highland, a.cached(`highland-spire:${j}`, () => new THREE.ConeGeometry(20 + j * 8, 120 + j * 60, 6)), j % 2 ? 'glass' : 'blue', toX(x + j * 20), 60 + j * 30, toZ(y + j * 30));
-        crystal.rotation.z = (i % 2 ? 1 : -1) * (.1 + j * .13);
+        iceOutcrop(a,highland,toX(x+j*28),toZ(y+j*38),65+j*22,80+j*45,i*.73+j);
       }
     }
     this.highlandScenery = this.batch(highland, 800); this.root.add(this.highlandScenery);
@@ -464,13 +462,16 @@ export class ThreeGameRenderer {
       rig.armorLevel = state.upgrades.armor; rig.armor.clear();
       if (rig.armorLevel > 1) { const armor = this.art.item('armor'); armor.scale.setScalar(0.85 + rig.armorLevel * 0.04); rig.armor.add(armor); }
     }
+    rig.weaponTarget ??= new THREE.Quaternion(); rig.weaponEuler ??= new THREE.Euler();
     if (p.attackMotion) {
       const pose = axePose(p.attackMotion.time, p.attackMotion.duration);
       rig.animation.sample('attack', p.attackMotion.time / p.attackMotion.duration * .44, p.moving);
-      rig.weapon.rotation.set(pose.wristX - rig.rightForearm.rotation.x, pose.wristY, 0);
+      rig.weaponEuler.set(pose.wristX - rig.rightForearm.rotation.x, pose.wristY, 0);
     } else {
-      rig.weapon.rotation.set(.22 - rig.rightForearm.rotation.x, -.2, -.32);
+      rig.weaponEuler.set(.12 - rig.rightForearm.rotation.x, -.2, -1.95);
     }
+    rig.weaponTarget.setFromEuler(rig.weaponEuler);
+    rig.weapon.quaternion.slerp(rig.weaponTarget, 1 - Math.exp(-Math.max(.001,dt)*32));
     // Keep the authored handle grip at the mitten origin through every wrist rotation.
     rig.weapon.position.copy(new THREE.Vector3(0, AXE_GRIP_Y, 0).applyQuaternion(rig.weapon.quaternion).multiplyScalar(-rig.weapon.scale.x));
     this.updateSlashTrail(p);

@@ -21,7 +21,7 @@ export class ArtModels {
       color, map: this.textures[texture] || null, roughness: 0.78, ...props
     });
     this.m = {
-      snow: mat(0xffffff, 'snow'), wood: mat(0x8da8b8, 'steel', {metalness:.4,roughness:.45}), darkWood: mat(0x304b5b, 'steel', {metalness:.5,roughness:.4}),
+      snow: mat(0xffffff, 'snow'), wood: mat(0x8b6245, 'wood', {roughness:.86}), darkWood: mat(0x443a32, 'wood', {roughness:.91}),
       cloth: mat(0xffffff, 'cloth'), red: mat(0xe95149, 'cloth'), teal: mat(0x3daba7, 'steel'),
       navy: mat(0x34454f, 'cloth'), leather: mat(0xa35440, 'cloth'), steel: mat(0xc3d3d6, 'steel', { metalness: 0.35, roughness: 0.42 }),
       trim: mat(0xe8f3ec), black: mat(0x27343d), skin: mat(0xffc59e), hair: mat(0x51413e),

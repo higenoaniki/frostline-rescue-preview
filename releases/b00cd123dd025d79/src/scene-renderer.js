@@ -25,6 +25,7 @@ import { beastAttackTime } from './actor-animation.js';
 import { updateFacilityMotion, facilityJoints } from './facility-animation.js';
 import { FrameBudget, FrameMeasurement } from './frame-budget.js';
 import { MotionDiagnostics } from './motion-diagnostics.js';
+import { buildAlpineLandscape } from './alpine-landscape.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
@@ -61,7 +62,7 @@ export class ThreeGameRenderer {
     const environment = new THREE.CubeTexture(faces); environment.colorSpace = THREE.SRGBColorSpace; environment.needsUpdate = true;
     if (this.renderer.extensions.has('EXT_color_buffer_float')) this.scene.environment = environment;
     else environment.dispose();
-    this.scene.environmentIntensity = .55;
+    this.scene.environmentIntensity = .72;
     this.camera = new THREE.OrthographicCamera(-600, 600, 900, -900, 1, 6000);
     this.art = new ArtModels(this.profile); this.root = new THREE.Group(); this.scene.add(this.root);
     this.enemyMeshes = new Map(); this.enemyPool = []; this.dropMeshes = new Map(); this.particleMeshes = new Map();
@@ -69,9 +70,9 @@ export class ThreeGameRenderer {
     this.stations = new Map(); this.flyingItems = []; this.lastTransferId = 0;
     this.lastElapsed = 0; this.lastRunId = -1; this.focus = new THREE.Vector3(0, 0, 300);
     this.raycaster = new THREE.Raycaster(); this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    this.hemi = new THREE.HemisphereLight(0xc6e3f2, 0x34485f, .78); this.scene.add(this.hemi);
-    this.fillLight = new THREE.DirectionalLight(0x9dcae6, .75); this.fillLight.position.set(800, 650, -1200); this.scene.add(this.fillLight);
-    this.sun = new THREE.DirectionalLight(0xffd7aa, 3.3);
+    this.hemi = new THREE.HemisphereLight(0xc6e3f2, 0x5c5146, .65); this.scene.add(this.hemi);
+    this.fillLight = new THREE.DirectionalLight(0xaed7ef, .45); this.fillLight.position.set(800, 650, -1200); this.scene.add(this.fillLight);
+    this.sun = new THREE.DirectionalLight(0xffdfba, 3.1);
     this.sun.position.set(-650, 1550, 700); this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     Object.assign(this.sun.shadow.camera, { left: -1500, right: 1500, top: 1500, bottom: -1500, near: 100, far: 3500 });
@@ -114,6 +115,7 @@ export class ThreeGameRenderer {
     const a = this.art, terrain = new THREE.Group();
     a.box(terrain, WORLD.width + 500, 80, WORLD.height + 500, 'stone', 0, -56, 0, 40);
     terrain.add(buildFieldSurface(a));
+    terrain.add(buildAlpineLandscape(a));
     a.box(terrain, SAFE.w + 40, 24, SAFE.h + 40, 'stoneDark', 0, 7, toZ(SAFE.y + SAFE.h / 2), 16);
     terrain.add(buildCampSurface(a));
     for (let i = 0; i < 26; i++) {
@@ -326,7 +328,7 @@ export class ThreeGameRenderer {
     this.renderer.setPixelRatio(Math.min(dpr, this.budget.ratio)); this.renderer.setSize(width, height, false);
     const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
     this.finish.resize(size.x, size.y);
-    const aspect = width / height, viewHeight = 1000;
+    const aspect = width / height, viewHeight = 940;
     this.camera.left = -viewHeight * aspect / 2; this.camera.right = viewHeight * aspect / 2;
     this.camera.top = viewHeight / 2; this.camera.bottom = -viewHeight / 2; this.camera.updateProjectionMatrix();
   }
@@ -399,7 +401,7 @@ export class ThreeGameRenderer {
     const region = regionFor(state.region);
     if (this.region !== region.id) {
       this.region = region.id; this.renderer.setClearColor(region.sky); this.scene.fog.color.set(region.sky); this.sun.color.set(region.sun); this.renderer.toneMappingExposure = region.exposure;
-      this.hemi.intensity = region.id === 'highland' ? .55 : .78;
+      this.hemi.intensity = region.id === 'highland' ? .5 : .65;
       this.highlandScenery.visible = region.id === 'highland';
     }
     this.updateCamera(state, dt);
@@ -435,7 +437,7 @@ export class ThreeGameRenderer {
     }
     const follow = state.endingView ? state.expedition?.flight ?? REFUGE_POSITION : state.expedition?.flight && !state.expedition.arrived ? state.expedition.flight : state.player;
     const target = new THREE.Vector3(toX(follow.x), follow === state.player ? 0 : 120, toZ(follow.y)); this.focus.lerp(target, 1 - Math.exp(-dt * 7));
-    this.camera.position.copy(this.focus).add(new THREE.Vector3(1000, 1500, 1200));
+    this.camera.position.copy(this.focus).add(new THREE.Vector3(900, 1150, 1250));
     this.camera.lookAt(this.focus.x, this.focus.y + 35, this.focus.z); this.camera.updateMatrixWorld();
     if (this.impact > 0) { this.camera.position.x += Math.sin(state.elapsed * 65) * this.impact * 35; this.impact = Math.max(0, this.impact - dt); }
     this.sun.position.copy(this.focus).add(new THREE.Vector3(-650, 1550, 700)); this.sun.target.position.copy(this.focus);
@@ -485,7 +487,7 @@ export class ThreeGameRenderer {
     }
     const pct = clamp(p.hp / p.hpMax, 0, 1);
     const side = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0).multiplyScalar(76);
-    this.hp.position.set(toX(p.x) + side.x, mesh.position.y + 153, toZ(p.y) + side.z); this.hp.quaternion.copy(this.camera.quaternion);
+    this.hp.position.set(toX(p.x) + side.x, mesh.position.y + 178, toZ(p.y) + side.z); this.hp.quaternion.copy(this.camera.quaternion);
     this.hp.userData.fill.scale.x = Math.max(0.001, pct); this.hp.userData.fill.position.x = -(1 - pct) * 35;
     this.hp.userData.fill.material.color.set(pct < 0.3 ? 0xed6159 : 0x68da8e);
     this.selection.position.set(toX(p.x), mesh.position.y + 2, toZ(p.y));

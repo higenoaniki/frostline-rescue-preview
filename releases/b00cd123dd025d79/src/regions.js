@@ -1,5 +1,5 @@
 export const REGIONS = [
-  { id: 'valley', number: '01', name: '白樺の谷', subtitle: '越冬の補給基地', objectives: 12, sky: 0xacc8d8, sun: 0xffd0a1, exposure: 1.0 },
+  { id: 'valley', number: '01', name: '白樺の谷', subtitle: '越冬の補給基地', objectives: 12, sky: 0xb7d3df, sun: 0xffdda9, exposure: 1.0 },
   { id: 'highland', number: '02', name: '星灯りの高地', subtitle: '薄暮の補給作戦', objectives: 12, sky: 0x9eaec1, sun: 0xffc3a0, exposure: 0.92 }
 ];
 export const regionFor = id => REGIONS.find(r => r.id === id) ?? REGIONS[0];

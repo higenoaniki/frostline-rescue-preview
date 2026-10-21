@@ -49,14 +49,12 @@ export function buildCampSurface(a) {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geometry.computeVertexNormals();
   const material = a.m.snow.clone(); material.vertexColors = true; material.onBeforeCompile = a.m.snow.onBeforeCompile;
   const ground = new THREE.Mesh(geometry, material); ground.receiveShadow = true; group.add(ground);
-  const stone = a.m.floor.clone(); stone.color.set(0x7f9698); stone.roughness = .95;
-  // Irregular paving, with snow left in the joints, reads as a lived-in camp.
+  const stone = a.m.wood.clone(); stone.color.set(0x92775b); stone.roughness = .93;
+  // Worn timber duckboards, with packed snow visible between each real plank.
   for (let i = 0; i < 67; i++) {
     const y = SAFE.y + 48 + i * 32;
-    for (const side of [-1, 1]) {
-      const tile = a.box(group, 72 + i % 3 * 3, 3, 28, stone, side * 40, 32, toZ(y + side * (i % 2) * 3), 2);
-      tile.rotation.y = Math.sin(i * 13 + side) * .025;
-    }
+    const tile = a.box(group, 157 + i % 3 * 3, 4, 27, stone, Math.sin(i*17)*2, 32.5, toZ(y), 1.2);
+    tile.rotation.y = Math.sin(i * 13) * .018;
   }
   for (const y of [3830, 4130, 4430, 4840, 5230]) for (let i = 0; i < 30; i++) {
     const x = -540 + i * 37;

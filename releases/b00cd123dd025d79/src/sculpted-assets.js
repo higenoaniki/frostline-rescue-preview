@@ -33,7 +33,7 @@ export function loadSculptedAssets() {
       });
       catalog.set(key, root);
     }
-    document.querySelector('#game')?.setAttribute('data-art', 'sculpted-v12');
+    document.querySelector('#game')?.setAttribute('data-art', 'keyart-v16');
   });
   return loading;
 }
@@ -57,7 +57,7 @@ export function sculptedPerson(worker = false) {
   const material = sculptedSurface(g.getObjectByProperty('isMesh', true).material.clone());
   material.emissive.set(0xff9064); material.emissiveIntensity = 0;
   g.traverse(node => { if (node.isMesh) node.material = material; });
-  g.userData = { torso: joint('torso'), head: joint('head'), leftLeg: joint('leg-left'), rightLeg: joint('leg-right'), leftArm: joint('arm-left'), rightArm: joint('arm-right'), grip: joint('weapon-grip'), stack: joint('stack'), armor: joint('armor'), facing: 0, walk: 0, flash: material };
+  g.userData = { ...g.userData, torso: joint('torso'), head: joint('head'), leftLeg: joint('leg-left'), rightLeg: joint('leg-right'), leftArm: joint('arm-left'), rightArm: joint('arm-right'), grip: joint('weapon-grip'), stack: joint('stack'), armor: joint('armor'), facing: 0, walk: 0, flash: material };
   g.userData.rightForearm = joint('forearm-right');
   g.userData.leftShin = joint('shin-left');
   g.userData.animation = new ActorAnimation(g, clips, 'human');

@@ -66,7 +66,19 @@ export function sculptedSurface(material, industrial = false) {
           diffuseColor.rgb *= mix(vec3(.80,.91,1.04), vec3(1.02,1.025,1.02), smoothstep(-.1,.85,vSculptNormal.y));
         }
         if (family == 5.0) { grain = (reliefValue - .5) * .17; roughnessFactor = .96; }
-        if (family == 6.0) roughnessFactor = .5;
+        if (family == 6.0) {
+          roughnessFactor = .57;
+          grain = sin(sp.x*18.)*sin(sp.y*20.+sp.z*4.)*.004;
+        }
+        if (family == 10.0) {
+          roughnessFactor = .39;
+          grain = sin(sp.y*19.+sin(sp.x*1.8))*.023;
+        }
+        if (family == 2.0 && diffuseColor.r > diffuseColor.g * 1.3) {
+          float dust = fract(sin(dot(floor(sp*3.),vec3(12.9898,78.233,37.719)))*43758.5453);
+          float settle = smoothstep(.12,.85,vSculptNormal.y);
+          diffuseColor.rgb = mix(diffuseColor.rgb,vec3(.79,.84,.85),smoothstep(.965,.993,dust)*settle*.55);
+        }
         if (family == 8.0) { roughnessFactor = .59 + reliefValue*.13; grain += (reliefValue-.5)*.08; }
         if (family == 9.0) { roughnessFactor = .49 + reliefValue*.12; grain *= .24; }
         diffuseColor.rgb *= 1.0 + grain;
@@ -80,6 +92,6 @@ export function sculptedSurface(material, industrial = false) {
         normal = normalize((abs(det) + .000001) * normal + sign(det) * (dFdx(grain) * ss + dFdy(grain) * st) * .55);
       `);
   };
-  material.customProgramCacheKey = () => 'sculpted-surface-v16';
+  material.customProgramCacheKey = () => 'sculpted-surface-v17';
   return material;
 }

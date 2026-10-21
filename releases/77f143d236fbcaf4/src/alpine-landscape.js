@@ -1,6 +1,26 @@
 import * as THREE from './vendor/three.module.js';
 import { WORLD, toX, toZ } from './world-config.js';
 
+const outcropMaterial = new THREE.MeshStandardMaterial({ color:0xe5edf0, roughness:.88, vertexColors:true });
+
+export function iceOutcrop(a, parent, x, z, width, height, turn=0) {
+  const geometry=a.cached('weathered-ice-outcrop-v16',()=>{
+    const shape=new THREE.SphereGeometry(.5,14,10), p=shape.attributes.position;
+    const colors=new Float32Array(p.count*3);
+    for(let i=0;i<p.count;i++) {
+      const px=p.getX(i),py=p.getY(i),pz=p.getZ(i);
+      const strata=Math.sin(py*36)*.028, fracture=Math.sin(px*21+pz*17+py*13)*.065;
+      p.setXYZ(i,px*(1+fracture)+strata,py+fracture*.17,pz*(1+fracture));
+      const snow=Math.max(0,Math.min(1,(py-.03)*5));
+      const color=new THREE.Color(0x879eaa).lerp(new THREE.Color(0xf4f4ec),snow);
+      color.multiplyScalar(.94+Math.cos(py*46)*.045);color.toArray(colors,i*3);
+    }
+    shape.setAttribute('color',new THREE.BufferAttribute(colors,3));shape.computeVertexNormals();return shape;
+  });
+  const rock=a.mesh(parent,geometry,outcropMaterial,x,height*.44,z);
+  rock.scale.set(width,height,width*.85);rock.rotation.y=turn;return rock;
+}
+
 export function buildAlpineLandscape(a) {
   const group = new THREE.Group(); group.name = 'alpine-glacier-v16';
   const ice = new THREE.MeshStandardMaterial({ color:0xa9d7e1,roughness:.64,metalness:.08,vertexColors:true });

@@ -3,7 +3,7 @@ export const SWING_START = 0.12;
 export const SWING_END = 0.30;
 export const SWING_HALF_ANGLE = 1.45;
 export const MELEE_REACH = 116;
-export const AXE_GRIP_Y = -6;
+export const AXE_GRIP_Y = -12;
 export const swingProgress = time => Math.min(1, Math.max(0, (time - SWING_START) / (SWING_END - SWING_START)));
 export const swingOffset = time => -SWING_HALF_ANGLE + swingProgress(time) * SWING_HALF_ANGLE * 2;
 

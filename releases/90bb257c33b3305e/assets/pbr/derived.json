@@ -1,0 +1,21 @@
+{
+  "license": "CC0-1.0",
+  "revision": "pbr-v18",
+  "face": {
+    "path": "face-color.jpg",
+    "sha256": "47399849ccb1eacdc3f9608c2f52c36819f74fc00658376da764d4c34f33d646",
+    "provider": "MakeHuman Community",
+    "source": "https://download.tuxfamily.org/makehuman/assets/1.1/base/skins/textures/young_lightskinned_female_diffuse.png",
+    "sourceSha256": "b2a6ac8cd4f9febdb447368e29c76cd68410bb66e46d9dcfa2d5f75126eea8fc",
+    "licensePage": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+    "process": "scripts/prepare-face-texture.py retains only UV islands used by the CC0 head/neck subset. All other areas are neutral fill. The original full-body texture is not distributed."
+  },
+  "calibration": {
+    "script": "scripts/calibrate-pbr-colors.py",
+    "reason": "Preserve measured surface detail without double tinting the authored vertex-color palette",
+    "files": [
+      {"path":"snow-calibrated.jpg","source":"snow-color.jpg","sha256":"5564f7c9b1f0ac6778f5baea7217d15d3da8e2fa736e2de4caacbe9b43c9e4c9"},
+      {"path":"wood-calibrated.jpg","source":"wood-color.jpg","sha256":"133047b7c2c627e44327b765c2247543a91905bb724395d0cfdde5822a6dd306"}
+    ]
+  }
+}

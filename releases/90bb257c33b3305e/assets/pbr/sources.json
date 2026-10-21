@@ -1,0 +1,136 @@
+{
+  "license": "CC0-1.0",
+  "provider": "Poly Haven",
+  "providerUrl": "https://polyhaven.com",
+  "buildTimeOnly": true,
+  "files": [
+    {
+      "path": "snow-color.jpg",
+      "asset": "snow_02",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_diff_1k.jpg",
+      "page": "https://polyhaven.com/a/snow_02",
+      "bytes": 325497,
+      "sha256": "523a4e69c90b96d787dd69b897f29a2b3761a017024405c60aa630d1e8e9009a"
+    },
+    {
+      "path": "snow-normal.png",
+      "asset": "snow_02",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/snow_02/snow_02_nor_gl_1k.png",
+      "page": "https://polyhaven.com/a/snow_02",
+      "bytes": 2118417,
+      "sha256": "110f8f0b4668c780412480a459d1276a52633f2d0af6c3eb30fd7ef90c6426fa"
+    },
+    {
+      "path": "snow-roughness.jpg",
+      "asset": "snow_02",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/snow_02/snow_02_rough_1k.jpg",
+      "page": "https://polyhaven.com/a/snow_02",
+      "bytes": 146089,
+      "sha256": "b6dea8039ac2a5beaed6fd41834fb55540cc76b492edd1d48ba2da2f30f1cb75"
+    },
+    {
+      "path": "wood-color.jpg",
+      "asset": "wood_planks_grey",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks_grey/wood_planks_grey_diff_1k.jpg",
+      "page": "https://polyhaven.com/a/wood_planks_grey",
+      "bytes": 228279,
+      "sha256": "d758be23e8fe7bfbd73bc4ab257cfd59406e1835f6557c12a67cd4fdb15de0d8"
+    },
+    {
+      "path": "wood-normal.png",
+      "asset": "wood_planks_grey",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/wood_planks_grey/wood_planks_grey_nor_gl_1k.png",
+      "page": "https://polyhaven.com/a/wood_planks_grey",
+      "bytes": 5350344,
+      "sha256": "a9f2ad602eca2d59e84f203b1087e819e62ae517532bb25f7eb02a13c826e08b"
+    },
+    {
+      "path": "wood-roughness.jpg",
+      "asset": "wood_planks_grey",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_planks_grey/wood_planks_grey_rough_1k.jpg",
+      "page": "https://polyhaven.com/a/wood_planks_grey",
+      "bytes": 186804,
+      "sha256": "ef640502cec94bd2b6500e252891a778a7a721be16b5536d4efc9fe4d99b12aa"
+    },
+    {
+      "path": "cloth-color.jpg",
+      "asset": "fabric_leather_01",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fabric_leather_01/fabric_leather_01_diff_1k.jpg",
+      "page": "https://polyhaven.com/a/fabric_leather_01",
+      "bytes": 510537,
+      "sha256": "19d8935e5f9ece35b422290b1a0333cc438fabab88990d8217ee37408bc33c64"
+    },
+    {
+      "path": "cloth-normal.png",
+      "asset": "fabric_leather_01",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/fabric_leather_01/fabric_leather_01_nor_gl_1k.png",
+      "page": "https://polyhaven.com/a/fabric_leather_01",
+      "bytes": 1793187,
+      "sha256": "dfdc5cf745c3a8223a19eb5603f9b42ab96e56024bfdffe9a33d9300c87ef764"
+    },
+    {
+      "path": "cloth-roughness.jpg",
+      "asset": "fabric_leather_01",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fabric_leather_01/fabric_leather_01_rough_1k.jpg",
+      "page": "https://polyhaven.com/a/fabric_leather_01",
+      "bytes": 577850,
+      "sha256": "e86b189a48f0de9ea7e6abb6a0a45220ee199b1228335952e1e130a16778d1e4"
+    },
+    {
+      "path": "leather-color.jpg",
+      "asset": "brown_leather",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_albedo_1k.jpg",
+      "page": "https://polyhaven.com/a/brown_leather",
+      "bytes": 503348,
+      "sha256": "7e9e1d6566d1fd91d4ceb4966c4820361e85d53a7a828b6bab3b2a093a876cd1"
+    },
+    {
+      "path": "leather-normal.png",
+      "asset": "brown_leather",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/brown_leather/brown_leather_nor_gl_1k.png",
+      "page": "https://polyhaven.com/a/brown_leather",
+      "bytes": 1925895,
+      "sha256": "6354daff40330a2fcd6c1061912876ddc79889c960975adba336b013db5edcd5"
+    },
+    {
+      "path": "leather-roughness.jpg",
+      "asset": "brown_leather",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_rough_1k.jpg",
+      "page": "https://polyhaven.com/a/brown_leather",
+      "bytes": 686142,
+      "sha256": "f9739ef2da2e3d17b9ec253f5042f61b10dc10f3ae28f6cf6491650d3d1b0ca3"
+    },
+    {
+      "path": "metal-color.jpg",
+      "asset": "metal_plate",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/metal_plate/metal_plate_diff_1k.jpg",
+      "page": "https://polyhaven.com/a/metal_plate",
+      "bytes": 692234,
+      "sha256": "c6b6739eac2c75ccc898e753d7833df24eafbdb9aa92fb6eabfb92abd1a680a5"
+    },
+    {
+      "path": "metal-normal.png",
+      "asset": "metal_plate",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/metal_plate/metal_plate_nor_gl_1k.png",
+      "page": "https://polyhaven.com/a/metal_plate",
+      "bytes": 5359071,
+      "sha256": "d858021ebc0a2a01ec13e574bc47ed58795e129904cda2868b3fb2dfd02d6741"
+    },
+    {
+      "path": "metal-roughness.jpg",
+      "asset": "metal_plate",
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/metal_plate/metal_plate_rough_1k.jpg",
+      "page": "https://polyhaven.com/a/metal_plate",
+      "bytes": 775206,
+      "sha256": "756308485ce742a52831453c296452f48cf0adead7d85adfffd34c08dce23ec1"
+    },
+    {
+      "path": "environment-hdr.hdr",
+      "asset": "snow_field_2",
+      "source": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/snow_field_2_1k.hdr",
+      "page": "https://polyhaven.com/a/snow_field_2",
+      "bytes": 1436442,
+      "sha256": "e62583cec7b4482f18a8f9ff6cb7bcaa8e5605e3f6b4d71fcccbe7e9d9931ce8"
+    }
+  ]
+}

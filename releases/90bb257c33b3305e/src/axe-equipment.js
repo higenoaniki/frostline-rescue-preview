@@ -1,29 +1,12 @@
 import { Vector3, Quaternion, Matrix4 } from './vendor/three.module.js';
-import { AXE_GRIP_Y, SWING_DURATION } from './melee.js';
+import { AXE_GRIP_Y } from './melee.js';
+import { axePose as hatchetPose, HATCHET_FRAMES as frames } from './attack-pose.js';
+export { axePose as hatchetPose } from './attack-pose.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=t=>t*t*(3-2*t);
-const frames=[
-  [0,   28,72,-3,   0,1,0],
-  [.06, 34,112,4,   .1,.9,-.2],
-  [.12, 33,140,-9,  .2,.7,-.7],
-  [.20, 36,108,32,  .8,.3,.9],
-  [.30, -1,94,25,  -.7,.1,.8],
-  [.37, 28,96,8,    0,1,0],
-  [.44, 26,98,22,   0,.5,.9]
-];
-const beltHand=[28,72,-3];
+const beltHand=frames[0].slice(1,4);
 const readyHand=frames.at(-1).slice(1,4);
-
-export function hatchetPose(time,duration=SWING_DURATION,drawFromHolster=true) {
-  const t=clamp(time/Math.max(.001,duration),0,1)*SWING_DURATION;
-  const index=Math.min(frames.length-2,Math.max(0,frames.findIndex((f,i)=>i<frames.length-1&&t<=frames[i+1][0])));
-  const a=index===0&&!drawFromHolster?[0,...frames.at(-1).slice(1)]:frames[index];
-  const b=frames[index+1],f=smooth(clamp((t-a[0])/(b[0]-a[0]),0,1));
-  const values=a.slice(1).map((v,i)=>v+(b[i+1]-v)*f);
-  const draw=drawFromHolster?smooth(clamp(t/.065,0,1)):1;
-  return {hand:values.slice(0,3),shaft:values.slice(3),draw,gripY:18+(AXE_GRIP_Y-18)*draw};
-}
 
 // Analytic two-link reach preserves the authored shoulder, elbow and wrist lengths.
 // The pole bends the elbow outwards, rather than twisting it through the chest.
@@ -36,6 +19,28 @@ export class HatchetEquipment {
     this.identity=new Quaternion();this.upperRest=rig.rightForearm.position.clone();this.lowerRest=rig.hand.position.clone();
     this.upperLength=this.upperRest.length();this.lowerLength=this.lowerRest.length();
     this.upperRest.normalize();this.lowerRest.normalize();
+    this.neutralShaft=new Vector3();this.bendNormal=new Vector3();
+    this.rolls=[];
+    for(const frame of frames){
+      this.reach(frame.slice(1,4));
+      const cue=new Vector3(...frame.slice(4));
+      let roll=Math.atan2(cue.dot(this.bendNormal),cue.dot(this.neutralShaft));
+      if(this.rolls.length){const previous=this.rolls.at(-1);roll=previous+Math.atan2(Math.sin(roll-previous),Math.cos(roll-previous));}
+      this.rolls.push(roll);
+    }
+  }
+  reach(hand) {
+    const r=this.rig;
+    this.target.fromArray(hand);this.direction.copy(this.target).sub(r.rightArm.position);
+    const distance=clamp(this.direction.length(),Math.abs(this.upperLength-this.lowerLength)+.05,this.upperLength+this.lowerLength-.05);
+    this.direction.normalize();
+    this.pole.set(1,-.25,-.5).addScaledVector(this.direction,-this.direction.dot(this.pole)).normalize();
+    const along=(this.upperLength**2+distance**2-this.lowerLength**2)/(2*distance);
+    this.elbow.copy(this.direction).multiplyScalar(along).addScaledVector(this.pole,Math.sqrt(Math.max(0,this.upperLength**2-along**2)));
+    this.target.copy(r.rightArm.position).addScaledVector(this.direction,distance);
+    this.forearmDirection.copy(this.target).sub(r.rightArm.position).sub(this.elbow).normalize();
+    this.bendNormal.crossVectors(this.elbow,this.forearmDirection).normalize();
+    this.neutralShaft.crossVectors(this.bendNormal,this.forearmDirection).normalize();
   }
   update(motion,dt=0,runId=null) {
     const r=this.rig,weapon=r.weapon;
@@ -59,20 +64,22 @@ export class HatchetEquipment {
       r.weaponState=stow>0?'returning':'ready';
     }
     r.sheath.visible=false;
-    this.target.fromArray(pose.hand);
-    this.direction.copy(this.target).sub(r.rightArm.position);
-    const distance=clamp(this.direction.length(),Math.abs(this.upperLength-this.lowerLength)+.05,this.upperLength+this.lowerLength-.05);
-    this.direction.normalize();
-    this.pole.set(1,-.25,-.5).addScaledVector(this.direction,-this.direction.dot(this.pole)).normalize();
-    const along=(this.upperLength**2+distance**2-this.lowerLength**2)/(2*distance);
-    this.elbow.copy(this.direction).multiplyScalar(along).addScaledVector(this.pole,Math.sqrt(Math.max(0,this.upperLength**2-along**2)));
+    this.reach(pose.hand);
     r.rightArm.quaternion.setFromUnitVectors(this.upperRest,this.elbow.clone().normalize());
-    this.target.copy(r.rightArm.position).addScaledVector(this.direction,distance);
-    this.forearmDirection.copy(this.target).sub(r.rightArm.position).sub(this.elbow).normalize();
     this.parentRotation.copy(r.rightArm.quaternion).invert();
     r.rightForearm.quaternion.setFromUnitVectors(this.lowerRest,this.forearmDirection.clone().applyQuaternion(this.parentRotation));
-    // A neutral power grip puts the handle across the palm, not along the forearm.
-    this.shaft.fromArray(pose.shaft).addScaledVector(this.forearmDirection,-this.forearmDirection.dot(this.shaft)).normalize();
+    // Interpolate authored roll in the elbow plane. Projecting a changing world
+    // direction directly can cross a pole and flip the wrist by 180 degrees.
+    let roll;
+    if(motion){
+      const start=pose.index===0&&!this.drawFromHolster?this.rolls.at(-1):this.rolls[pose.index];
+      const delta=Math.atan2(Math.sin(this.rolls[pose.index+1]-start),Math.cos(this.rolls[pose.index+1]-start));
+      roll=start+delta*pose.blend;
+    }else{
+      const start=this.rolls.at(-1),delta=Math.atan2(Math.sin(this.rolls[0]-start),Math.cos(this.rolls[0]-start));
+      roll=start+delta*stow;
+    }
+    this.shaft.copy(this.neutralShaft).multiplyScalar(Math.cos(roll)).addScaledVector(this.bendNormal,Math.sin(roll));
     this.edge.copy(this.forearmDirection);this.normal.crossVectors(this.edge,this.shaft).normalize();
     this.edge.crossVectors(this.shaft,this.normal).normalize();
     this.matrix.makeBasis(this.edge,this.shaft,this.normal);

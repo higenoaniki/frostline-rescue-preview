@@ -31,13 +31,7 @@ export class CinematicPipeline {
         float depthAt(vec2 uv) { return mix(cameraRange.x, cameraRange.y, texture2D(sceneDepth, uv).r); }
         void main() {
           vec3 center = texture2D(sceneColor, vUv).rgb;
-          vec3 n = texture2D(sceneColor, vUv + vec2(0., texel.y)).rgb;
-          vec3 s = texture2D(sceneColor, vUv - vec2(0., texel.y)).rgb;
-          vec3 e = texture2D(sceneColor, vUv + vec2(texel.x, 0.)).rgb;
-          vec3 w = texture2D(sceneColor, vUv - vec2(texel.x, 0.)).rgb;
-          float lo = min(sceneLuma(center), min(min(sceneLuma(n),sceneLuma(s)),min(sceneLuma(e),sceneLuma(w))));
-          float hi = max(sceneLuma(center), max(max(sceneLuma(n),sceneLuma(s)),max(sceneLuma(e),sceneLuma(w))));
-          vec3 color = mix(center, (n+s+e+w)*.25, smoothstep(.12,.5,(hi-lo)/max(hi,.01))*.34);
+          vec3 color = center;
           float depth = depthAt(vUv), occlusion = 0.;
           vec3 glow = vec3(0.);
           for (int i=0; i<8; i++) {
@@ -51,11 +45,6 @@ export class CinematicPipeline {
           }
           color *= 1. - occlusion * .052 * finishStrength;
           color += glow * .018 * finishStrength;
-          // Subtle cold shadows / warm highlights, without crushing snow detail.
-          float luma = sceneLuma(color);
-          color *= mix(vec3(.91,.98,1.065),vec3(1.045,1.015,.96),smoothstep(.08,.9,luma));
-          vec2 frame = vUv*(1.-vUv);
-          color *= mix(.91,1.,smoothstep(0.,.17,sqrt(frame.x*frame.y)));
           gl_FragColor = vec4(color,1.);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>

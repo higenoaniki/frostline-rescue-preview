@@ -1,6 +1,6 @@
 {
   "project": "Frostline Rescue",
-  "revision": "keyart-v17",
+  "revision": "pbr-v18",
   "source": "Original costume, hair, gloves, equipment, creatures and environment authored by repository scripts; anatomical head/neck derived from the CC0 MakeHuman base mesh and female-young target",
   "anatomy": {
     "source": "https://github.com/makehumancommunity/makehuman",
@@ -10,9 +10,10 @@
     "used": "Head/neck subset only; no source body/helper meshes are delivered"
   },
   "editableSource": "art-source/frostline-art.blend (not distributed in the game)",
-  "format": "glTF 2.0 binary, embedded vertex shading and surface-family UVs",
+  "format": "glTF 2.0 binary, baked vertex AO, TEXCOORD_0 surface IDs and TEXCOORD_1 material/anatomical UVs",
   "thirdPartyGameAssets": false,
-  "surfaceAtlas": "Original imagegen albedo expedition-materials-v16.png (canvas, leather, pine, steel) plus material-relief-v12.png, sampled on actual 3D surfaces with authored TEXCOORD_0 material IDs; no third-party game images",
+  "surfaces": "Native Three.js physical materials, independently mapped measured normal/roughness textures from Poly Haven CC0 and head-only MakeHuman CC0 skin. See assets/pbr/sources.json and derived.json. Original key-art costume colors retained in authored vertex colors; no image overlays.",
+  "lighting": "Poly Haven snow_field_2 HDR processed at runtime with PMREM; local bundled files only, no external API or CDN at runtime",
   "animation": "Six authored AnimationMixer clips plus analytic two-link shoulder/elbow reach and wrist orientation in axe-equipment.js; one physical hatchet with belt/hand attachment and a covered blade at rest",
   "referenceOnly": "Original Frostline title key art v15 is the material and costume direction, not a gameplay background or billboard; no claim of equal key-art fidelity at runtime",
   "runtimeLibrary": "Three.js GLTFLoader, MIT; see src/vendor/THREE-LICENSE.txt"

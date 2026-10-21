@@ -1,0 +1,74 @@
+{
+  "snow-1": [
+    "impact",
+    "footstep_snow_000.ogg"
+  ],
+  "snow-2": [
+    "impact",
+    "footstep_snow_001.ogg"
+  ],
+  "snow-3": [
+    "impact",
+    "footstep_snow_002.ogg"
+  ],
+  "stone-1": [
+    "impact",
+    "footstep_concrete_000.ogg"
+  ],
+  "stone-2": [
+    "impact",
+    "footstep_concrete_001.ogg"
+  ],
+  "axe-impact-1": [
+    "impact",
+    "impactWood_heavy_000.ogg"
+  ],
+  "axe-impact-2": [
+    "impact",
+    "impactWood_heavy_001.ogg"
+  ],
+  "hurt": [
+    "impact",
+    "impactPunch_heavy_000.ogg"
+  ],
+  "build": [
+    "impact",
+    "impactMining_000.ogg"
+  ],
+  "deposit": [
+    "impact",
+    "impactWood_light_000.ogg"
+  ],
+  "swing": [
+    "rpg",
+    "knifeSlice2.ogg"
+  ],
+  "pickup": [
+    "rpg",
+    "handleSmallLeather.ogg"
+  ],
+  "sell": [
+    "rpg",
+    "handleCoins.ogg"
+  ],
+  "gate": [
+    "rpg",
+    "creak1.ogg"
+  ],
+  "milestone": [
+    "jingles",
+    "Pizzicato jingles/jingles_PIZZI00.ogg"
+  ],
+  "victory": [
+    "jingles",
+    "Pizzicato jingles/jingles_PIZZI07.ogg"
+  ],
+  "failure": [
+    "jingles",
+    "Pizzicato jingles/jingles_PIZZI10.ogg"
+  ],
+  "launch": [
+    "jingles",
+    "Steel jingles/jingles_STEEL00.ogg"
+  ]
+}

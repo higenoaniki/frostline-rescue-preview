@@ -1,0 +1,57 @@
+.title-screen { background: url('../assets/title/key-art-v15.jpg') 62% center / cover no-repeat; isolation: isolate; }
+.title-screen::before { content: ''; position: fixed; inset: 0; z-index: -1; background: #101e2638; }
+.title-header { color: #fff3d4; text-shadow: 0 2px 6px #182927; }
+.title-kicker { color: white; text-shadow: 0 2px 6px #182927; }
+.title-content { width: min(440px,100%); padding-top: 32px; }
+.title-content h1 { margin: 0 0 26px; font-size: 32px; letter-spacing: 0; }
+.title-content h1::after { display: none; }
+.title-wordmark { display: block; width: 100%; height: auto; aspect-ratio: 2.4; object-fit: contain; }
+.region-heading, .title-save { text-shadow: 0 2px 4px #14212b; }
+.region-list { border-color: #ffffff70; background: #10282bba; padding: 0 14px; }
+.region-option { border-color: #ffffff50; }
+.region-option .region-number { color: #ffd18a; }
+.region-option small { color: #e1edef; }
+.title-save { color: white; }
+.boot-panel { display: grid; align-items: end; justify-items: start; padding: max(32px,env(safe-area-inset-top)) max(6%,env(safe-area-inset-right)) max(48px,env(safe-area-inset-bottom)); isolation: isolate; background: #c6e1e5; }
+.boot-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 62% center; }
+.boot-panel::after { content: ''; position: absolute; inset: 0; z-index: -1; background: #071a2314; }
+.boot-card { width: min(480px,100%); margin-bottom: 8%; padding: 0; border: 0; border-radius: 0; box-shadow: none; background: none; color: white; }
+.boot-card h1 { margin: 0 0 22px; font-size: 25px; color: white; letter-spacing: 0; }
+.boot-card p { margin: 12px 0; font-size: 13px; font-weight: 650; color: white; text-shadow: 0 2px 5px #071923,0 0 15px #071923; }
+.boot-progress { height: 3px; width: min(220px,60%); overflow: hidden; background: #213b4780; }
+.boot-progress i { display: block; width: 40%; height: 100%; background: #ffdf9c; animation: expedition-loading 1.7s ease-in-out infinite; }
+.boot-card pre { padding: 12px; border-left: 2px solid #efb568; color: #fff; background: #112431e8; }
+.boot-panel:has(#bootRetry:not([hidden])) .boot-progress { display: none; }
+.hud-wordmark { width: 83px; height: 30px; object-fit: contain; flex: 0 0 83px; }
+.brand { gap: 10px; }
+.brand-mark { display: none; }
+.brand #regionName { font-size: 12px; }
+.audio-controls { border: 0; padding: 0; margin: 0 0 18px; color: #294852; }
+#displaySettings .modal-card { color: #294852; }
+.audio-controls legend { font-size: 12px; font-weight: 750; margin-bottom: 8px; }
+.audio-controls label { display: grid; grid-template-columns: 46px minmax(0,1fr) 38px; gap: 10px; align-items: center; min-height: 40px; font-size: 12px; }
+.audio-controls input { width: 100%; min-width: 0; margin: 0; accent-color: #258d92; }
+.audio-controls output { font-variant-numeric: tabular-nums; text-align: right; }
+.audio-credits { font-size: 11px; margin-top: 7px; }
+.audio-credits summary { cursor: pointer; }
+.audio-credits p { font-size: 11px; line-height: 1.7; margin: 8px 0; }
+.audio-credits a { color: #23616a; }
+@keyframes expedition-loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+@media (max-width: 600px) {
+  .boot-panel { padding: 24px 20px max(42px,env(safe-area-inset-bottom)); }
+  .boot-art { object-position: 78% center; }
+  .boot-card { width: 100%; margin: 0; }
+  .boot-card h1 { width: min(360px,100%); margin-bottom: 18px; }
+  .title-screen { background-position: 78% center; }
+  .title-screen::before { background: #10262c69; }
+  .title-content { padding-top: 30px; }
+  .title-content h1 { margin-bottom: 26px; }
+}
+@media (max-height: 500px) and (min-aspect-ratio: 4/3) {
+  .boot-card { width: 310px; margin: 0; }
+  .boot-card h1 { margin-bottom: 12px; }
+  .title-content { width: min(760px,100%); padding-top: 10px; }
+  .title-content h1 { align-self: start; margin-top: 12px; }
+  .audio-controls { grid-column: 1; grid-row: 6; margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .boot-progress i { animation: none; width: 100%; opacity: .7; } }

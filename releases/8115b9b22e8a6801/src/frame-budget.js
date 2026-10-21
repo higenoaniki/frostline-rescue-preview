@@ -15,7 +15,7 @@ export class FrameBudget {
     const p90 = percentile(this.window,.9); this.window = []; this.windowMs = 0;
     const previous = this.ratio;
     if (p90 > 23 && this.cooldown <= 0) {
-      this.ratio = Math.max(Math.min(.75,this.maxRatio),Math.round((this.ratio-.25)*100)/100);
+      this.ratio = Math.max(Math.min(1,this.maxRatio),Math.round((this.ratio-.25)*100)/100);
       this.degraded = this.ratio < this.maxRatio; this.cooldown = 5; this.fastSeconds = 0;
     } else if (p90 < 18) {
       this.fastSeconds += elapsed;
@@ -26,7 +26,7 @@ export class FrameBudget {
 }
 
 export class FrameMeasurement {
-  constructor() { this.samples=[];this.totalMs=0;this.active=false;this.revision='keyart-v17'; }
+  constructor() { this.samples=[];this.totalMs=0;this.active=false;this.revision='native-pbr-v18'; }
   start(device='unspecified') { this.samples=[];this.totalMs=0;this.device=device;this.active=true;this.startedAt=new Date().toISOString(); }
   record(frameMs, info) {
     if (!this.active || !Number.isFinite(frameMs) || frameMs <= 0) return;

@@ -2,6 +2,7 @@ import * as THREE from './vendor/three.module.js';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { explorer, frostBeast, processingWorkshop, winterForge, supplyBeacon, upgradeWorkshop } from './winter-art.js';
+import {terrainPbrMaterial} from './pbr-materials.js';
 
 export class ArtModels {
   constructor(profile = { anisotropy: 4 }) {
@@ -46,14 +47,21 @@ export class ArtModels {
     this.m.steel.metalness = .72; this.m.steel.roughness = .3;
     this.m.glass.metalness = .3; this.m.glass.roughness = .12;
     this.m.furLight.color.set(0xe9ede4); this.m.floor.color.set(0xa3b3b3);
+    this.m.snow=terrainPbrMaterial(4);
     this.m.snow.onBeforeCompile = shader => {
       shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
         vec3 snowWorld = (modelMatrix * vec4(position, 1.0)).xyz;
         #ifdef USE_MAP
-          vMapUv = snowWorld.xz * 0.008;
+          vMapUv = snowWorld.xz * 0.004;
         #endif
         #ifdef USE_BUMPMAP
           vBumpMapUv = snowWorld.xz * 0.012;
+        #endif
+        #ifdef USE_NORMALMAP
+          vNormalMapUv = snowWorld.xz * 0.004;
+        #endif
+        #ifdef USE_ROUGHNESSMAP
+          vRoughnessMapUv = snowWorld.xz * 0.004;
         #endif`);
     };
   }

@@ -26,6 +26,7 @@ import { updateFacilityMotion, facilityJoints } from './facility-animation.js';
 import { FrameBudget, FrameMeasurement } from './frame-budget.js';
 import { MotionDiagnostics } from './motion-diagnostics.js';
 import { buildAlpineLandscape, iceOutcrop } from './alpine-landscape.js';
+import { applyPhysicalLighting } from './physical-lighting.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
@@ -55,14 +56,7 @@ export class ThreeGameRenderer {
     this.renderer.shadowMap.enabled = this.profile.shadows && this.budget.mode !== 'low';
     this.finish = new CinematicPipeline(this.renderer, this.profile.antialias);
     this.scene = new THREE.Scene(); this.scene.fog = new THREE.Fog(0xc8e6ed, 3000, 5600);
-    const faces = Array.from({ length: 6 }, (_, face) => {
-      const c = document.createElement('canvas'); c.width = c.height = 64; const ctx = c.getContext('2d');
-      const gradient = ctx.createLinearGradient(0, 0, 0, 64); gradient.addColorStop(0, face === 2 ? '#e8f5ff' : '#b2d4e3'); gradient.addColorStop(1, face === 3 ? '#617786' : '#edf0e8'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, 64, 64); return c;
-    });
-    const environment = new THREE.CubeTexture(faces); environment.colorSpace = THREE.SRGBColorSpace; environment.needsUpdate = true;
-    if (this.renderer.extensions.has('EXT_color_buffer_float')) this.scene.environment = environment;
-    else environment.dispose();
-    this.scene.environmentIntensity = .72;
+    this.lightingReady=applyPhysicalLighting(this.renderer,this.scene);
     this.camera = new THREE.OrthographicCamera(-600, 600, 900, -900, 1, 6000);
     this.art = new ArtModels(this.profile); this.root = new THREE.Group(); this.scene.add(this.root);
     this.enemyMeshes = new Map(); this.enemyPool = []; this.dropMeshes = new Map(); this.particleMeshes = new Map();
@@ -70,12 +64,12 @@ export class ThreeGameRenderer {
     this.stations = new Map(); this.flyingItems = []; this.lastTransferId = 0;
     this.lastElapsed = 0; this.lastRunId = -1; this.focus = new THREE.Vector3(0, 0, 300);
     this.raycaster = new THREE.Raycaster(); this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    this.hemi = new THREE.HemisphereLight(0xc6e3f2, 0x5c5146, .65); this.scene.add(this.hemi);
-    this.fillLight = new THREE.DirectionalLight(0xaed7ef, .45); this.fillLight.position.set(800, 650, -1200); this.scene.add(this.fillLight);
+    this.hemi = new THREE.HemisphereLight(0xc6e3f2, 0x5c5146, .32); this.scene.add(this.hemi);
+    this.fillLight = new THREE.DirectionalLight(0xaed7ef, .2); this.fillLight.position.set(800, 650, -1200); this.scene.add(this.fillLight);
     this.sun = new THREE.DirectionalLight(0xffdfba, 3.1);
     this.sun.position.set(-650, 1550, 700); this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(this.sun.shadow.camera, { left: -1500, right: 1500, top: 1500, bottom: -1500, near: 100, far: 3500 });
+    this.sun.shadow.mapSize.set(this.profile.shadowResolution,this.profile.shadowResolution);
+    Object.assign(this.sun.shadow.camera, { left: -1000, right: 1000, top: 1000, bottom: -1000, near: 100, far: 3500 });
     this.sun.shadow.bias = -0.0004; this.sun.shadow.normalBias = 2;
     this.scene.add(this.sun, this.sun.target); this.buildWorld();
     this.snowTracks = new SnowTracks(this.root);
@@ -338,7 +332,7 @@ export class ThreeGameRenderer {
   }
 
   applyDisplayBudget() {
-    this.renderer.shadowMap.enabled = this.profile.shadows && this.budget.mode !== 'low' && !this.budget.degraded;
+    this.renderer.shadowMap.enabled = this.profile.shadows && this.budget.mode !== 'low';
     this.resize(this.width,this.height,window.devicePixelRatio || 1);
   }
 
@@ -399,7 +393,7 @@ export class ThreeGameRenderer {
     const region = regionFor(state.region);
     if (this.region !== region.id) {
       this.region = region.id; this.renderer.setClearColor(region.sky); this.scene.fog.color.set(region.sky); this.sun.color.set(region.sun); this.renderer.toneMappingExposure = region.exposure;
-      this.hemi.intensity = region.id === 'highland' ? .5 : .65;
+      this.hemi.intensity = region.id === 'highland' ? .27 : .32;
       this.highlandScenery.visible = region.id === 'highland';
     }
     this.updateCamera(state, dt);
@@ -468,7 +462,7 @@ export class ThreeGameRenderer {
     rig.equipment ??= new HatchetEquipment(rig);
     rig.equipment.update(p.attackMotion,dt,state.runId);
     this.updateSlashTrail(p);
-    mesh.visible = true; this.playerFlash.emissiveIntensity = p.hurtFlash * .35;
+    mesh.visible = true; this.playerFlash.forEach(material=>material.emissiveIntensity=p.hurtFlash*.35);
     const sig = `${p.raw}:${p.cuts}:${p.goods}`;
     if (this.stackSignature !== sig) {
       this.stackSignature = sig; this.clearInventory(rig.stack); let y = 0;
@@ -526,7 +520,7 @@ export class ThreeGameRenderer {
       const m = enemy.attackMotion;
       if (m) rig.animation.sample('attack', beastAttackTime(m));
       else rig.animation.locomotion(walking ? 1 : 0, dt);
-      mesh.visible = true; rig.flash.emissiveIntensity = enemy.hurt * .16;
+      mesh.visible = true; rig.flash.forEach(material=>material.emissiveIntensity=enemy.hurt*.16);
       rig.prev.x = enemy.x; rig.prev.y = enemy.y;
     }
     const boss = enemies.find(e => e.boss);

@@ -3,7 +3,8 @@
     "triangles": 57764,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "leg-left",
       "shin-left",
@@ -29,7 +30,8 @@
     "triangles": 57764,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "leg-left",
       "shin-left",
@@ -55,7 +57,8 @@
     "triangles": 9134,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -70,7 +73,8 @@
     "triangles": 9134,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -85,7 +89,8 @@
     "triangles": 9156,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -100,7 +105,8 @@
     "triangles": 9270,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -115,7 +121,8 @@
     "triangles": 14000,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "roof",
       "saw",
@@ -126,7 +133,8 @@
     "triangles": 14390,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "gauge--42",
       "gauge-42",
@@ -138,7 +146,8 @@
     "triangles": 14466,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "display-axe",
       "hammer",
@@ -149,7 +158,8 @@
     "triangles": 14170,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "needle",
       "roof",
@@ -160,7 +170,8 @@
     "triangles": 14272,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "hammer",
       "roof"
@@ -170,7 +181,8 @@
     "triangles": 14046,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "roof"
     ]
@@ -179,21 +191,24 @@
     "triangles": 13984,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "depot": {
     "triangles": 13992,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "hunter-tower": {
     "triangles": 2404,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "turret"
     ]
@@ -202,7 +217,8 @@
     "triangles": 4472,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "cargo",
       "rotor0",
@@ -215,21 +231,24 @@
     "triangles": 6678,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "rock": {
     "triangles": 1680,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "conveyor": {
     "triangles": 4052,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "wheel"
     ]
@@ -238,7 +257,8 @@
     "triangles": 3144,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "piston"
     ]
@@ -247,7 +267,8 @@
     "triangles": 3860,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "hook",
       "pulley"
@@ -257,7 +278,8 @@
     "triangles": 3548,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "radar"
     ]
@@ -266,7 +288,8 @@
     "triangles": 3336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "bow"
     ]
@@ -275,7 +298,8 @@
     "triangles": 3044,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "dish"
     ]
@@ -284,112 +308,128 @@
     "triangles": 4228,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-raw": {
     "triangles": 1228,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-cuts": {
     "triangles": 324,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-goods": {
     "triangles": 652,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-cash": {
     "triangles": 648,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-pack": {
     "triangles": 2520,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-armor": {
     "triangles": 912,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-axe": {
     "triangles": 1492,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-axe3": {
     "triangles": 1600,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-fur": {
     "triangles": 1340,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-ore": {
     "triangles": 336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "item-core": {
     "triangles": 336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "fence-panel": {
     "triangles": 2532,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "fence-post": {
     "triangles": 1212,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "gate-panel": {
     "triangles": 2012,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": []
   },
   "refuge": {
     "triangles": 14054,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v17",
+    "revision": "pbr-v18",
+    "detailUV": true,
     "joints": [
       "roof"
     ]

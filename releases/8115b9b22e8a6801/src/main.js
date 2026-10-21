@@ -29,6 +29,7 @@ import { TOP_MENU_ENABLED } from './launch-config.js';
 const canvas = document.querySelector("#game");
 await loadSculptedAssets();
 const renderer3d = new ThreeGameRenderer(canvas);
+await renderer3d.lightingReady;
 const audio = new GameAudio();
 
 const hud = {

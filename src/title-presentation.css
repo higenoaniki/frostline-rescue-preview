@@ -27,7 +27,7 @@
 .brand-mark { display: none; }
 .brand #regionName { font-size: 12px; }
 .audio-controls { border: 0; padding: 0; margin: 0 0 18px; color: #294852; }
-.display-modal { color: #294852; }
+#displaySettings .modal-card { color: #294852; }
 .audio-controls legend { font-size: 12px; font-weight: 750; margin-bottom: 8px; }
 .audio-controls label { display: grid; grid-template-columns: 46px minmax(0,1fr) 38px; gap: 10px; align-items: center; min-height: 40px; font-size: 12px; }
 .audio-controls input { width: 100%; min-width: 0; margin: 0; accent-color: #258d92; }

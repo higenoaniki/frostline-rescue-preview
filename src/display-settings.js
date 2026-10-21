@@ -4,14 +4,14 @@ export class DisplaySettings {
   constructor(renderer, { onOpen, onClose }) {
     this.renderer=renderer;this.panel=document.querySelector('#displaySettings');this.onClose=onClose;
     const button=document.querySelector('#settingsButton'), close=document.querySelector('#settingsClose');
-    buttonIcon(button,'settings','画質と端末計測');buttonIcon(close,'close','閉じる');
+    buttonIcon(button,'settings','画質・サウンド・端末計測');buttonIcon(close,'close','閉じる');
     button.onclick=()=>{onOpen();this.panel.hidden=false;this.refresh();close.focus();};
     window.addEventListener('resize',()=>requestAnimationFrame(()=>{if(!this.panel.hidden)this.refresh();}));
     close.onclick=()=>this.close();
     this.panel.addEventListener('keydown',event=>{
       if(event.key==='Escape'){event.preventDefault();this.close();}
       if(event.key==='Tab'){
-        const nodes=[...this.panel.querySelectorAll('button,input,select,textarea')].filter(e=>!e.disabled&&!e.hidden),first=nodes[0],last=nodes.at(-1);
+        const nodes=[...this.panel.querySelectorAll('button,input,select,textarea,summary,a[href]')].filter(e=>!e.disabled&&e.getClientRects().length),first=nodes[0],last=nodes.at(-1);
         if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
         else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
       }

@@ -225,6 +225,11 @@ function start() {
     onOpen: () => { settingsPaused = state.paused; state.paused = true; state.investment = resetInvestment(); resetTouch(); state.input.keys.clear(); },
     onClose: resume => { state.paused = resume && state.running && !state.gameOver ? false : settingsPaused; resetTouch(); state.input.keys.clear(); }
   });
+  for (const [bus, id] of [['music', 'musicVolume'], ['effects', 'effectsVolume']]) {
+    const slider = document.querySelector(`#${id}`), output = document.querySelector(`#${id}Value`);
+    slider.value = Math.round(audio[bus] * 100); output.value = `${slider.value}%`;
+    slider.addEventListener('input', () => { audio.setVolume(bus, Number(slider.value) / 100); output.value = `${slider.value}%`; });
+  }
   let saved = null;
   try { if (state.saveEnabled) saved = readCampaign(window.localStorage); } catch {}
   if (saved) {
@@ -236,8 +241,9 @@ function start() {
   updateHud();
   if (TOP_MENU_ENABLED) showHome();
   else enterRegion('valley');
-  window.addEventListener('pagehide', flushCampaign);
+  window.addEventListener('pagehide', () => { audio.setActivity({ hidden: true }); flushCampaign(); });
   window.addEventListener('frostline:fatal', () => {
+    audio.setActivity({ hidden: true });
     state.renderFailed = true; state.paused = true;
     state.investment = resetInvestment(); resetTouch(); state.input.keys.clear();
     flushCampaign();
@@ -249,6 +255,7 @@ function start() {
     showModal('拠点の更新', '別の画面で更新されました。', '最新の拠点を開く', () => location.reload());
   });
   document.addEventListener('visibilitychange', () => {
+    audio.setActivity({ paused: state.paused && !state.home, hidden: document.hidden });
     if (!document.hidden) return;
     state.investment = resetInvestment(); resetTouch(); state.input.keys.clear(); flushCampaign();
   });
@@ -493,6 +500,8 @@ function loop(time) {
     update(step, false); remaining -= step; advanced = true;
   }
   if (advanced) updateHud();
+  audio.setActivity({ paused: state.paused && !state.home, hidden: document.hidden });
+  audio.update(state.home ? null : state.player, isInsideSafe(state.player));
   draw();
   renderer3d.observeFrame(time, state.running && !state.paused && !state.gameOver && !document.hidden);
   requestAnimationFrame(loop);
@@ -613,6 +622,7 @@ function updatePlayerCombat(dt) {
         hits: new Set()
       };
       p.attackCooldown = 0.49;
+      audio.play('swing');
     }
   }
 
@@ -770,6 +780,7 @@ function updateEnemyAttack(enemy, dt) {
         const damage = incomingDamage(state, armorDamage(enemy.damage, state.upgrades.armor));
         state.player.hp = Math.max(0, state.player.hp - damage);
         state.player.hurtFlash = 1;
+        audio.play('hurt');
         addFloater(`-${Math.ceil(damage)} HP`, state.player.x, state.player.y - 60, "#ef5f5f");
         burst(state.player.x, state.player.y, "#ef5f5f", 10);
       }
@@ -935,6 +946,7 @@ function updateAutoStations(dt) {
 
 function sellGoods(count, from, automated) {
   if (!count) return;
+  if (!automated || distance(from, state.player) < 700) audio.play('sell');
   const gained = count * SALE_PRICE;
   state.player.cash += gained;
   state.stageCash += gained;
@@ -958,6 +970,7 @@ function activeUpgrade() {
 }
 
 function recordTransfer(type, from, to, kind) {
+  if (kind === 'deposit' || kind === 'collect' || kind === 'supply') audio.play('deposit');
   state.transfers.push({ id: ++state.transferSequence, type, kind, time: state.elapsed,
     from: { x: from.x, y: from.y, h: from === state.player ? 125 : from.h ?? (['pickup', 'drone-load'].includes(kind) ? 13 : 72) },
     to: { x: to.x, y: to.y, h: to === state.player ? 135 : to.h ?? 80 } });

@@ -1,0 +1,17 @@
+{
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "music": {
+    "title": "Winter Wind", "author": "wipics",
+    "source": "https://opengameart.org/content/winter-wind",
+    "download": "https://opengameart.org/sites/default/files/winter-wind_0.mp3",
+    "changes": "Loudness normalization to -19 LUFS and re-encoding as 128kbps MP3; streamed locally, not hotlinked."
+  },
+  "effects": [
+    { "author": "Kenney", "title": "Impact Sounds", "source": "https://kenney.nl/assets/impact-sounds" },
+    { "author": "Kenney", "title": "RPG Audio", "source": "https://kenney.nl/assets/rpg-audio" },
+    { "author": "Kenney", "title": "Music Jingles", "source": "https://kenney.nl/assets/music-jingles" }
+  ],
+  "effectChanges": "Selected files decoded to mono 32kHz 16-bit PCM WAV for Safari, Android and offline native playback. Original sample names are recorded in sample-sources.json.",
+  "verified": "2026-10-21"
+}

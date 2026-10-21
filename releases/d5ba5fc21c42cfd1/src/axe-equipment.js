@@ -5,7 +5,6 @@ export { axePose as hatchetPose } from './attack-pose.js';
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=t=>t*t*(3-2*t);
-const beltHand=frames[0].slice(1,4);
 const readyHand=frames.at(-1).slice(1,4);
 
 // Analytic two-link reach preserves the authored shoulder, elbow and wrist lengths.
@@ -20,9 +19,10 @@ export class HatchetEquipment {
     this.upperLength=this.upperRest.length();this.lowerLength=this.lowerRest.length();
     this.upperRest.normalize();this.lowerRest.normalize();
     this.neutralShaft=new Vector3();this.bendNormal=new Vector3();
+    this.beltHand=rig.holster.position.clone().add(new Vector3(0,-10,0)).sub(rig.grip.position).toArray();
     this.rolls=[];
-    for(const frame of frames){
-      this.reach(frame.slice(1,4));
+    for(const [index,frame]of frames.entries()){
+      this.reach(index===0?this.beltHand:frame.slice(1,4));
       const cue=new Vector3(...frame.slice(4));
       let roll=Math.atan2(cue.dot(this.bendNormal),cue.dot(this.neutralShaft));
       if(this.rolls.length){const previous=this.rolls.at(-1);roll=previous+Math.atan2(Math.sin(roll-previous),Math.cos(roll-previous));}
@@ -59,8 +59,9 @@ export class HatchetEquipment {
       if(this.lastMotion!==motion)this.drawFromHolster=!this.ready;
       this.lastMotion=motion;this.ready=true;this.idleAge=0;
       pose=hatchetPose(motion.time,motion.duration,this.drawFromHolster);r.weaponState='held';
+      if(this.drawFromHolster&&pose.index===0)pose.hand=pose.hand.map((v,i)=>v+(this.beltHand[i]-frames[0][i+1])*(1-pose.blend));
     }else{
-      pose={hand:readyHand.map((v,i)=>v+(beltHand[i]-v)*stow),shaft:[0,.5+stow*.5,.9*(1-stow)],draw:1-stow,gripY:AXE_GRIP_Y+(18-AXE_GRIP_Y)*stow};
+      pose={hand:readyHand.map((v,i)=>v+(this.beltHand[i]-v)*stow),shaft:[0,.5+stow*.5,.9*(1-stow)],draw:1-stow,gripY:AXE_GRIP_Y+(18-AXE_GRIP_Y)*stow};
       r.weaponState=stow>0?'returning':'ready';
     }
     r.sheath.visible=false;

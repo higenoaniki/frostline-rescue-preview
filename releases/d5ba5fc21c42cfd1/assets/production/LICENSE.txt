@@ -1,0 +1,28 @@
+Frostline Rescue production assets / revision production-v19
+
+CHARACTER
+Rain Rig (CC) Blender Foundation | studio.blender.org
+Source: https://studio.blender.org/characters/rain/v3/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+The explorer and collector are adaptations of Rain v3.3. Changes include winter
+clothing, gloves, gaiters, webbing, hip carrier, UV atlases, PBR baking, a reduced
+43-bone deformation rig, game-unit conversion, and new locomotion/attack clips.
+This is not an endorsement by Blender Foundation or Blender Studio.
+Rain-derived character mesh and texture adaptations retain CC BY 4.0 attribution.
+The game source code is not licensed by this asset credit.
+
+PROPS
+wooden_axe_02, wooden_axe_03 / Ulan Cabanilla / Poly Haven
+wooden_military_crate / Prabhjinder Singh / Poly Haven
+barrel_stove / MP / Poly Haven
+https://polyhaven.com/license
+License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+Changes: game-scale conversion, grip-axis orientation, cargo mesh LOD, preserved
+source PBR materials and UVs. The axe cover is an original fitted mesh using
+Poly Haven brown_leather CC0 textures, credited in ../pbr/sources.json.
+
+Exact source URLs, authors and SHA-256 checksums: sources.json.
+Editable adaptation projects are maintained in the private source repository.

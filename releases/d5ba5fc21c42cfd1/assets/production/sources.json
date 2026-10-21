@@ -1,0 +1,169 @@
+[
+  {
+    "id": "rain-v3.3",
+    "author": "Blender Studio",
+    "license": "CC-BY-4.0",
+    "page": "https://studio.blender.org/characters/rain/v3/",
+    "credit": "Rain Rig (CC) Blender Foundation | studio.blender.org",
+    "files": [
+      {
+        "file": "rain-v3.3.zip",
+        "url": "https://studio.blender.org/download-source/files/ee/a7/eea73e55dba1cea31c09848df6a794b2-4.zip",
+        "sha256": "80217f163f6392dc829233d63c2cfb5e1376775bc34101ad14f39631fea70d24",
+        "bytes": 67579177
+      }
+    ]
+  },
+  {
+    "id": "wooden_axe_02",
+    "license": "CC0-1.0",
+    "author": "Ulan Cabanilla",
+    "page": "https://polyhaven.com/a/wooden_axe_02",
+    "files": [
+      {
+        "file": "wooden_axe_02/wooden_axe_02.gltf",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/wooden_axe_02/wooden_axe_02_2k.gltf",
+        "sha256": "e4aa80bbe897bb24eb1fcfadd4b83b18eadb41f7cd56670d5017751c8baaa5e5",
+        "bytes": 2774
+      },
+      {
+        "file": "wooden_axe_02/textures/wooden_axe_02_arm_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_02/wooden_axe_02_arm_2k.jpg",
+        "sha256": "48fe4bae958db830994cb5014a2253b78b83e8378374165c790d8e82ec89ca79",
+        "bytes": 3218573
+      },
+      {
+        "file": "wooden_axe_02/textures/wooden_axe_02_diff_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_02/wooden_axe_02_diff_2k.jpg",
+        "sha256": "d76e360a2091ef3aeffd503c94c364c972b3c99a7a40100b8f42f51aa4dc83aa",
+        "bytes": 3055826
+      },
+      {
+        "file": "wooden_axe_02/textures/wooden_axe_02_nor_gl_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_02/wooden_axe_02_nor_gl_2k.jpg",
+        "sha256": "c7f81288b089ed64eb899d7fdccec1d89b4ebb0807a8d67ceb85e53318e3421e",
+        "bytes": 2424098
+      },
+      {
+        "file": "wooden_axe_02/wooden_axe_02.bin",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_axe_02/wooden_axe_02.bin",
+        "sha256": "8af8b62e3e36b986cdb510b6e7b3fbcfffe3b030c408d89261351041ab69565f",
+        "bytes": 59196
+      }
+    ]
+  },
+  {
+    "id": "wooden_axe_03",
+    "license": "CC0-1.0",
+    "author": "Ulan Cabanilla",
+    "page": "https://polyhaven.com/a/wooden_axe_03",
+    "files": [
+      {
+        "file": "wooden_axe_03/wooden_axe_03.gltf",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/wooden_axe_03/wooden_axe_03_2k.gltf",
+        "sha256": "bc9a9d955e1f4b07345efb813b18c4306c2bccf3c367761d758c4cf6f5761e47",
+        "bytes": 2766
+      },
+      {
+        "file": "wooden_axe_03/textures/wooden_axe_03_nor_gl_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_03/wooden_axe_03_nor_gl_2k.jpg",
+        "sha256": "50e6092810088cc308ef7fef6e0ca8d3f416db9b4d4a32f5a56e0c9f2cd141d0",
+        "bytes": 3203932
+      },
+      {
+        "file": "wooden_axe_03/textures/wooden_axe_03_diff_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_03/wooden_axe_03_diff_2k.jpg",
+        "sha256": "e542c4be6016c6d9573ea23a9a14de7f4cd2814dd3cd034782810394fef85a7d",
+        "bytes": 2401971
+      },
+      {
+        "file": "wooden_axe_03/textures/wooden_axe_03_arm_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_axe_03/wooden_axe_03_arm_2k.jpg",
+        "sha256": "4bfab06e60ad94073c589ffadd4b9578e004aeb208c6fffa95f8f159ada29e13",
+        "bytes": 2848478
+      },
+      {
+        "file": "wooden_axe_03/wooden_axe_03.bin",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_axe_03/wooden_axe_03.bin",
+        "sha256": "99ced67c826fc2f649ab3401f6f6d1d18c0525dc844216e9ae781a194f951a83",
+        "bytes": 106900
+      }
+    ]
+  },
+  {
+    "id": "wooden_military_crate",
+    "license": "CC0-1.0",
+    "author": "Prabhjinder Singh",
+    "page": "https://polyhaven.com/a/wooden_military_crate",
+    "files": [
+      {
+        "file": "wooden_military_crate/wooden_military_crate.gltf",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_military_crate/wooden_military_crate_1k.gltf",
+        "sha256": "e8d8d21d112fef04c8e9fd05a62dc7c94260bc230a43d86d0e1f4b5a888a9499",
+        "bytes": 6002
+      },
+      {
+        "file": "wooden_military_crate/textures/wooden_military_crate_nor_gl_1k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_military_crate/wooden_military_crate_nor_gl_1k.jpg",
+        "sha256": "89cc5ad94dd7ce425f2b9b04f37f2266778923369c77d8945101456f47579cf3",
+        "bytes": 745490
+      },
+      {
+        "file": "wooden_military_crate/textures/wooden_military_crate_diff_1k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_military_crate/wooden_military_crate_diff_1k.jpg",
+        "sha256": "aa6ace45bef9947586c07283cd11a2d737fe0783a18df69a76f77f59d4fb776d",
+        "bytes": 824093
+      },
+      {
+        "file": "wooden_military_crate/textures/wooden_military_crate_arm_1k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_military_crate/wooden_military_crate_arm_1k.jpg",
+        "sha256": "fe27fa628a9134f81958413c1a11deea8074fe40424c1a8a48ec459f2dde7955",
+        "bytes": 782386
+      },
+      {
+        "file": "wooden_military_crate/wooden_military_crate.bin",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_military_crate/wooden_military_crate.bin",
+        "sha256": "cf6fd469a476d834f9724f8b8f762630040d8e785e8697c5d7994ae3e840e727",
+        "bytes": 687548
+      }
+    ]
+  },
+  {
+    "id": "barrel_stove",
+    "license": "CC0-1.0",
+    "author": "MP",
+    "page": "https://polyhaven.com/a/barrel_stove",
+    "files": [
+      {
+        "file": "barrel_stove/barrel_stove.gltf",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/barrel_stove/barrel_stove_2k.gltf",
+        "sha256": "abfb2510abcb5eaf15d6867d3967df640a4d91c2a94aa82ad7faa841777a22ef",
+        "bytes": 2747
+      },
+      {
+        "file": "barrel_stove/textures/barrel_stove_diff_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/barrel_stove/barrel_stove_diff_2k.jpg",
+        "sha256": "92a0cdddf46a589d8c26bbe284d06a11d6631e55517b37dbfc739a2c5f518e3a",
+        "bytes": 3451677
+      },
+      {
+        "file": "barrel_stove/barrel_stove.bin",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/barrel_stove/barrel_stove.bin",
+        "sha256": "09d7eb63b75a4a214fdb9f03349e5ddf990ea9865b3fbfb3fede6e5ccfa19e68",
+        "bytes": 267680
+      },
+      {
+        "file": "barrel_stove/textures/barrel_stove_arm_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/barrel_stove/barrel_stove_arm_2k.jpg",
+        "sha256": "42d5b6c4e966d9272e6fdaed5435bfea8d883ee266404711385aeb5a7b8ce99c",
+        "bytes": 2937259
+      },
+      {
+        "file": "barrel_stove/textures/barrel_stove_nor_gl_2k.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/barrel_stove/barrel_stove_nor_gl_2k.jpg",
+        "sha256": "a8a17a3223bf8c12e5426ec4b0d5bd31239444f87556cfc389b97b5792304b95",
+        "bytes": 694414
+      }
+    ]
+  }
+]

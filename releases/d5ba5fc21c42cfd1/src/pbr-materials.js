@@ -9,12 +9,13 @@ export function loadPbrMaterials(){
     await Promise.all(sets.flatMap(set=>(['snow','wood'].includes(set)?['color','normal','roughness']:['normal','roughness']).map(async role=>{
       const file=role==='color'?`${set}-calibrated.jpg`:`${set}-${role}.${role==='normal'?'png':'jpg'}`;
       const texture=await loader.loadAsync(new URL(`../assets/pbr/${file}`,import.meta.url).href);
-      texture.channel=1;texture.wrapS=texture.wrapT=RepeatWrapping;texture.anisotropy=8;
+      // External maps must use the same upper-left UV convention as glTF.
+      texture.channel=1;texture.flipY=false;texture.wrapS=texture.wrapT=RepeatWrapping;texture.anisotropy=8;
       if(role==='color')texture.colorSpace=SRGBColorSpace;
       textures.set(`${set}-${role}`,texture);
     })));
     const face=await loader.loadAsync(new URL('../assets/pbr/face-color.jpg',import.meta.url).href);
-    face.channel=1;face.colorSpace=SRGBColorSpace;face.anisotropy=8;textures.set('face-color',face);
+    face.channel=1;face.flipY=false;face.colorSpace=SRGBColorSpace;face.anisotropy=8;textures.set('face-color',face);
   })();return loading;
 }
 
@@ -68,6 +69,6 @@ export function actorMaterials(root,color){
 
 export function terrainPbrMaterial(family){
   const material=pbrMaterial(family).clone();material.vertexColors=false;
-  for(const key of ['map','normalMap','roughnessMap'])if(material[key]){material[key]=material[key].clone();material[key].channel=0;}
+  for(const key of ['map','normalMap','roughnessMap'])if(material[key]){material[key]=material[key].clone();material[key].channel=0;material[key].flipY=true;}
   return material;
 }

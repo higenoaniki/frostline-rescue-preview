@@ -1,0 +1,32 @@
+{
+  "item-axe": {
+    "source": "wooden_axe_02",
+    "triangles": 2218,
+    "materialWorkflow": "authored-pbr",
+    "revision": "production-v19"
+  },
+  "item-axe3": {
+    "source": "wooden_axe_03",
+    "triangles": 3886,
+    "materialWorkflow": "authored-pbr",
+    "revision": "production-v19"
+  },
+  "item-goods": {
+    "source": "wooden_military_crate",
+    "triangles": 5514,
+    "materialWorkflow": "authored-pbr",
+    "revision": "production-v19"
+  },
+  "heater": {
+    "source": "barrel_stove",
+    "triangles": 9216,
+    "materialWorkflow": "authored-pbr",
+    "revision": "production-v19"
+  },
+  "axe-cover": {
+    "source": "Original fitted protective cover; Poly Haven brown_leather CC0 maps",
+    "triangles": 270,
+    "materialWorkflow": "authored-pbr",
+    "revision": "production-v19"
+  }
+}

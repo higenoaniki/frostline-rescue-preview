@@ -27,6 +27,7 @@
 .brand-mark { display: none; }
 .brand #regionName { font-size: 12px; }
 .audio-controls { border: 0; padding: 0; margin: 0 0 18px; color: #294852; }
+.display-modal { color: #294852; }
 .audio-controls legend { font-size: 12px; font-weight: 750; margin-bottom: 8px; }
 .audio-controls label { display: grid; grid-template-columns: 46px minmax(0,1fr) 38px; gap: 10px; align-items: center; min-height: 40px; font-size: 12px; }
 .audio-controls input { width: 100%; min-width: 0; margin: 0; accent-color: #258d92; }
@@ -38,10 +39,10 @@
 @keyframes expedition-loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
 @media (max-width: 600px) {
   .boot-panel { padding: 24px 20px max(42px,env(safe-area-inset-bottom)); }
-  .boot-art { object-position: 67% center; }
+  .boot-art { object-position: 78% center; }
   .boot-card { width: 100%; margin: 0; }
   .boot-card h1 { width: min(360px,100%); margin-bottom: 18px; }
-  .title-screen { background-position: 64% center; }
+  .title-screen { background-position: 78% center; }
   .title-screen::before { background: #10262c69; }
   .title-content { padding-top: 30px; }
   .title-content h1 { margin-bottom: 26px; }

@@ -6,7 +6,7 @@ import { UPGRADE_SPECS, upgradeCost, upgradeLevel, upgradeCap, facilityAvailable
 import { HUNTER_POSITION, BOSS_POSITION } from './combat.js';
 import { SERVICE_GATE } from './automation.js';
 import { renderProfile } from './render-profile.js';
-import { axePose } from './attack-pose.js';
+import { HatchetEquipment } from './axe-equipment.js';
 import { missionTarget } from './navigation.js';
 import { REFUGE_POSITION, FINAL_SUPPLIES } from './expedition.js';
 import { SnowTracks } from './snow-tracks.js';
@@ -17,7 +17,7 @@ import { HEATER, BREACH } from './defense.js';
 import { regionFor } from './regions.js';
 import { lantern } from './premium-art.js';
 import { bakeModelShadow } from './baked-shadow.js';
-import { AXE_GRIP_Y, SWING_START, SWING_END } from './melee.js';
+import { SWING_START, SWING_END } from './melee.js';
 import { lootAmount } from './harvest-balance.js';
 import { buildFieldSurface, buildCampSurface, fieldHeight, surfaceHeight } from './field-art.js';
 import { WinterAtmosphere } from './winter-atmosphere.js';
@@ -453,27 +453,20 @@ export class ThreeGameRenderer {
     rig.facing = lerpAngle(rig.facing, facing, Math.min(1, dt * 24)); mesh.rotation.y = rig.facing;
     this.animateWalk(mesh, p.moving ? 1 : 0, dt);
     if (rig.weaponLevel !== state.upgrades.weapon) {
-      if (rig.weapon) rig.grip.remove(rig.weapon);
+      if (rig.weapon) rig.weapon.removeFromParent();
       rig.weaponLevel = state.upgrades.weapon; rig.weapon = this.art.item(rig.weaponLevel === 3 ? 'axe3' : 'axe');
-      rig.weapon.scale.setScalar(1.03 + rig.weaponLevel * .03);
-      rig.grip.add(rig.weapon);
+      rig.weapon.scale.setScalar(1);
+      rig.holster.add(rig.weapon);
     }
     if (rig.armorLevel !== state.upgrades.armor) {
       rig.armorLevel = state.upgrades.armor; rig.armor.clear();
       if (rig.armorLevel > 1) { const armor = this.art.item('armor'); armor.scale.setScalar(0.85 + rig.armorLevel * 0.04); rig.armor.add(armor); }
     }
-    rig.weaponTarget ??= new THREE.Quaternion(); rig.weaponEuler ??= new THREE.Euler();
     if (p.attackMotion) {
-      const pose = axePose(p.attackMotion.time, p.attackMotion.duration);
       rig.animation.sample('attack', p.attackMotion.time / p.attackMotion.duration * .44, p.moving);
-      rig.weaponEuler.set(pose.wristX - rig.rightForearm.rotation.x, pose.wristY, 0);
-    } else {
-      rig.weaponEuler.set(.12 - rig.rightForearm.rotation.x, -.2, -1.95);
     }
-    rig.weaponTarget.setFromEuler(rig.weaponEuler);
-    rig.weapon.quaternion.slerp(rig.weaponTarget, 1 - Math.exp(-Math.max(.001,dt)*32));
-    // Keep the authored handle grip at the mitten origin through every wrist rotation.
-    rig.weapon.position.copy(new THREE.Vector3(0, AXE_GRIP_Y, 0).applyQuaternion(rig.weapon.quaternion).multiplyScalar(-rig.weapon.scale.x));
+    rig.equipment ??= new HatchetEquipment(rig);
+    rig.equipment.update(p.attackMotion,dt,state.runId);
     this.updateSlashTrail(p);
     mesh.visible = true; this.playerFlash.emissiveIntensity = p.hurtFlash * .35;
     const sig = `${p.raw}:${p.cuts}:${p.goods}`;
@@ -504,7 +497,7 @@ export class ThreeGameRenderer {
     if (this.lastSlashMotion !== motion) { this.slashSamples = []; this.lastSlashMotion = motion; }
     this.player.updateWorldMatrix(true, true);
     const weapon = this.player.userData.weapon;
-    const pair = [new THREE.Vector3(8, 37, 0), new THREE.Vector3(34, 37, 0)].map(v => weapon.localToWorld(v));
+    const pair = [new THREE.Vector3(10, 21, 0), new THREE.Vector3(20, 34, 0)].map(v => weapon.localToWorld(v));
     this.slashSamples.push(pair); if (this.slashSamples.length > 12) this.slashSamples.shift();
     const position = this.slashGeometry.attributes.position; let index = 0;
     for (let i = 1; i < this.slashSamples.length; i++) {

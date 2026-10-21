@@ -26,7 +26,7 @@ export class FrameBudget {
 }
 
 export class FrameMeasurement {
-  constructor() { this.samples=[];this.totalMs=0;this.active=false;this.revision='sculpted-v12'; }
+  constructor() { this.samples=[];this.totalMs=0;this.active=false;this.revision='keyart-v17'; }
   start(device='unspecified') { this.samples=[];this.totalMs=0;this.device=device;this.active=true;this.startedAt=new Date().toISOString(); }
   record(frameMs, info) {
     if (!this.active || !Number.isFinite(frameMs) || frameMs <= 0) return;

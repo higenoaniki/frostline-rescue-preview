@@ -1,9 +1,9 @@
 {
   "explorer": {
-    "triangles": 21079,
+    "triangles": 57764,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "leg-left",
       "shin-left",
@@ -12,20 +12,24 @@
       "torso",
       "arm-left",
       "forearm-left",
+      "hand-left",
       "arm-right",
       "forearm-right",
+      "hand-right",
       "weapon-grip",
       "armor",
       "equipped-pack",
       "head",
-      "stack"
+      "stack",
+      "weapon-holster",
+      "blade-sheath"
     ]
   },
   "worker-character": {
-    "triangles": 21079,
+    "triangles": 57764,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "leg-left",
       "shin-left",
@@ -34,20 +38,24 @@
       "torso",
       "arm-left",
       "forearm-left",
+      "hand-left",
       "arm-right",
       "forearm-right",
+      "hand-right",
       "weapon-grip",
       "armor",
       "equipped-pack",
       "head",
-      "stack"
+      "stack",
+      "weapon-holster",
+      "blade-sheath"
     ]
   },
   "beast-normal": {
-    "triangles": 9228,
+    "triangles": 9134,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -59,10 +67,10 @@
     ]
   },
   "beast-alpha": {
-    "triangles": 9228,
+    "triangles": 9134,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -74,10 +82,10 @@
     ]
   },
   "beast-brute": {
-    "triangles": 9256,
+    "triangles": 9156,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -89,10 +97,10 @@
     ]
   },
   "beast-boss": {
-    "triangles": 9377,
+    "triangles": 9270,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "beast-leg-0",
       "beast-leg-1",
@@ -104,10 +112,10 @@
     ]
   },
   "processor": {
-    "triangles": 13956,
+    "triangles": 14000,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "roof",
       "saw",
@@ -115,21 +123,22 @@
     ]
   },
   "canner": {
-    "triangles": 13152,
+    "triangles": 14390,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "gauge--42",
       "gauge-42",
-      "piston"
+      "piston",
+      "roof"
     ]
   },
   "weapon": {
-    "triangles": 14184,
+    "triangles": 14466,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "display-axe",
       "hammer",
@@ -137,10 +146,10 @@
     ]
   },
   "armor": {
-    "triangles": 14112,
+    "triangles": 14170,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "needle",
       "roof",
@@ -148,10 +157,10 @@
     ]
   },
   "forge": {
-    "triangles": 13980,
+    "triangles": 14272,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "hammer",
       "roof"
@@ -161,7 +170,7 @@
     "triangles": 14046,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "roof"
     ]
@@ -170,21 +179,21 @@
     "triangles": 13984,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "depot": {
     "triangles": 13992,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "hunter-tower": {
     "triangles": 2404,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "turret"
     ]
@@ -193,7 +202,7 @@
     "triangles": 4472,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "cargo",
       "rotor0",
@@ -206,21 +215,21 @@
     "triangles": 6678,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "rock": {
     "triangles": 1680,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "conveyor": {
     "triangles": 4052,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "wheel"
     ]
@@ -229,7 +238,7 @@
     "triangles": 3144,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "piston"
     ]
@@ -238,7 +247,7 @@
     "triangles": 3860,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "hook",
       "pulley"
@@ -248,7 +257,7 @@
     "triangles": 3548,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "radar"
     ]
@@ -257,7 +266,7 @@
     "triangles": 3336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "bow"
     ]
@@ -266,7 +275,7 @@
     "triangles": 3044,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "dish"
     ]
@@ -275,112 +284,112 @@
     "triangles": 4228,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-raw": {
     "triangles": 1228,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-cuts": {
     "triangles": 324,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-goods": {
     "triangles": 652,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-cash": {
     "triangles": 648,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-pack": {
     "triangles": 2520,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-armor": {
-    "triangles": 1460,
+    "triangles": 912,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-axe": {
-    "triangles": 860,
+    "triangles": 1492,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-axe3": {
-    "triangles": 1136,
+    "triangles": 1600,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-fur": {
     "triangles": 1340,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-ore": {
     "triangles": 336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "item-core": {
     "triangles": 336,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "fence-panel": {
     "triangles": 2532,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "fence-post": {
     "triangles": 1212,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "gate-panel": {
     "triangles": 2012,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": []
   },
   "refuge": {
     "triangles": 14054,
     "mesh": true,
     "occlusionSamples": 16,
-    "revision": "keyart-v16",
+    "revision": "keyart-v17",
     "joints": [
       "roof"
     ]

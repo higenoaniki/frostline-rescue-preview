@@ -33,7 +33,7 @@ export function loadSculptedAssets() {
       });
       catalog.set(key, root);
     }
-    document.querySelector('#game')?.setAttribute('data-art', 'keyart-v16');
+    document.querySelector('#game')?.setAttribute('data-art', 'keyart-v17');
   });
   return loading;
 }
@@ -59,6 +59,9 @@ export function sculptedPerson(worker = false) {
   g.traverse(node => { if (node.isMesh) node.material = material; });
   g.userData = { ...g.userData, torso: joint('torso'), head: joint('head'), leftLeg: joint('leg-left'), rightLeg: joint('leg-right'), leftArm: joint('arm-left'), rightArm: joint('arm-right'), grip: joint('weapon-grip'), stack: joint('stack'), armor: joint('armor'), facing: 0, walk: 0, flash: material };
   g.userData.rightForearm = joint('forearm-right');
+  g.userData.hand = joint('hand-right');
+  g.userData.holster = joint('weapon-holster');
+  g.userData.sheath = joint('blade-sheath');
   g.userData.leftShin = joint('shin-left');
   g.userData.animation = new ActorAnimation(g, clips, 'human');
   return g;

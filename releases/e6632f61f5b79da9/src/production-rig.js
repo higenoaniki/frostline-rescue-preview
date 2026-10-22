@@ -2,7 +2,7 @@ import {Bone,Skeleton,SkinnedMesh,Vector3} from './vendor/three.module.js';
 
 // Preserve authored vertex weights and rest shape while expressing each bone in
 // game axes. Blender bone-tail axes must not distort the existing timed axe IK.
-export function canonicalizeProductionRig(root){
+export function canonicalizeProductionRig(root,{bounds=true}={}){
   root.updateWorldMatrix(true,true);
   const inverse=root.matrixWorld.clone().invert(),skins=[];
   root.traverse(node=>{if(node.isSkinnedMesh)skins.push(node);});
@@ -26,7 +26,7 @@ export function canonicalizeProductionRig(root){
   root.clear();root.add(...roots,...parts.map(part=>part.mesh));root.updateWorldMatrix(true,true);
   for(const {mesh,order}of parts){
     mesh.bind(new Skeleton(order),mesh.matrixWorld.clone());mesh.normalizeSkinWeights();
-    mesh.computeBoundingBox();mesh.computeBoundingSphere();
+    if(bounds){mesh.computeBoundingBox();mesh.computeBoundingSphere();}
     // Arm/axe poses can move outside the rest box. Only two human actors use
     // this bound; never cull their skinned sleeves from a stale bind-pose box.
     mesh.frustumCulled=false;

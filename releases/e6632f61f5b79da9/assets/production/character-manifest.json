@@ -1,9 +1,10 @@
 {
-  "revision": "production-v19",
-  "source": "Blender Studio Rain v3.3, adapted winter expedition costume and game rig",
+  "revision": "portrait-v21",
+  "source": "Blender Studio Rain authored face, fitted eyes, sculpted hair, body and rig; adapted portrait palette, proportions and expedition costume",
   "license": "CC-BY-4.0",
   "atlasSize": 2048,
-  "triangles": 153882,
+  "triangles": 106258,
+  "sourceTriangles": 212520,
   "bones": [
     "root-bone",
     "torso",
@@ -50,5 +51,7 @@
     "finger-left-thumb-3"
   ],
   "skinnedMeshes": 3,
-  "materialWorkflow": "authored-pbr"
+  "materialWorkflow": "authored-pbr",
+  "reference": "assets/title/key-art-v15.jpg",
+  "matchingStatus": "reference-adapted, not identity-verified"
 }

@@ -1,4 +1,4 @@
-import { ThreeGameRenderer } from "./scene-renderer.js";
+import { ToonCampRenderer as ThreeGameRenderer } from './toon-camp-renderer.js';
 import { WORLD as world, SAFE as safe, STATIONS as stations, HUNTING, CONVEYOR_PATH, enemyRules, enemySpawnPoint } from "./world-config.js";
 import { PLAYER_SPEED, SALE_PRICE, STORAGE_LIMIT, UPGRADE_SPECS, WEAPON_DAMAGE, upgradeCost, upgradeCap, facilityAvailable, facilityBuilt, facilityName, goalText, resetWork, resetUpgrades, resetPaid, resetBuilt, requiredWorkLevel } from './progression.js';
 import { advanceObjective } from './campaign.js';
@@ -22,12 +22,14 @@ import { walkingObstacles, insideRect, walkingRoute } from './walkways.js';
 import { REGIONS, regionFor, regionUnlocked, campaignKey, completedRegions, markRegionComplete, regionalEnemy } from './regions.js';
 import { SWING_DURATION, MELEE_REACH, sweptTargets } from './melee.js';
 import { lootAmount, compactGroundMeat, takeLoot, meatYield, spawnBudget } from './harvest-balance.js';
-import { loadSculptedAssets } from './sculpted-assets.js';
+import { loadToonCampAssets as loadSculptedAssets } from './toon-camp-art.js';
 import { DisplaySettings } from './display-settings.js';
 import { TOP_MENU_ENABLED } from './launch-config.js';
 import { bindStageTravel } from './stage-travel.js';
 
 const canvas = document.querySelector("#game");
+document.documentElement.classList.add('camp-toon');
+const toonStyle=document.createElement('link');toonStyle.rel='stylesheet';toonStyle.href=new URL('./toon-camp.css',import.meta.url).href;document.head.append(toonStyle);
 await loadSculptedAssets();
 const renderer3d = new ThreeGameRenderer(canvas);
 await renderer3d.lightingReady;

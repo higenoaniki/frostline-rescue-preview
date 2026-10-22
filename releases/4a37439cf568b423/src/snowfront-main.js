@@ -4,6 +4,7 @@ import{bindFloatingStick}from'./touch-controls.js';
 import{bindStageTravel}from'./stage-travel.js';
 import{GameAudio}from'./game-audio.js';
 import{buttonIcon,icon}from'./icons.js';
+import{facilityContext}from'./snowfront-ui.js';
 
 const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('./snowfront.css',import.meta.url).href;document.head.append(style);
 document.documentElement.classList.add('snowfront-mode');
@@ -12,6 +13,7 @@ const root=document.createElement('section');root.id='snowfrontRoot';root.classN
  <section class="sf-objective" data-game-ui><div><span id="sfMissionIcon"></span><b id="sfMissionTitle"></b><small id="sfMissionIndex"></small></div><p id="sfMissionText"></p><progress id="sfProgress" max="1" value="0"></progress><span class="sf-next" id="sfNext"></span></section>
  <div class="sf-celebrate" id="sfCelebrate" hidden role="status"><span id="sfTrophy"></span><div><small>MISSION COMPLETE</small><b id="sfCelebrateText"></b></div></div>
  <div class="sf-investment" id="sfInvestment" hidden data-game-ui><span id="sfInvestmentIcon"></span><div><b id="sfInvestmentName"></b><span id="sfInvestmentValue"></span></div><progress id="sfInvestmentProgress" max="1" value="0"></progress></div>
+ <section class="sf-context" id="sfContext" hidden data-game-ui><b id="sfContextTitle"></b><span id="sfContextDetail"></span><span id="sfContextStock"></span></section>
  <div class="sf-tools" data-game-ui><button id="sfTravelButton" type="button"></button><button id="sfSettingsButton" type="button"></button><button id="sfSound" type="button"></button><button id="sfPause" type="button"></button></div>
  <footer class="sf-bag" data-game-ui><div id="sfBagItems"></div><span id="sfCapacity"></span></footer>
  <div class="joystick" id="sfJoystick" aria-hidden="true"><span id="sfStick"></span></div>
@@ -36,6 +38,8 @@ let settingsWasPaused=false;$('sfSettingsButton').onclick=()=>{settingsWasPaused
 $('sfSettingsClose').onclick=()=>$('sfSettings').close();$('sfSettings').addEventListener('close',()=>{paused=settingsWasPaused;stop();});
 for(const [id,bus]of [['sfMusic','music'],['sfEffects','effects']]){$(id).value=Math.round(audio[bus]*100);$(id).oninput=()=>audio.setVolume(bus,Number($(id).value)/100);}
 try{quality=localStorage.getItem('frostline-snowfront-quality')||'auto';}catch{}
+if(!['auto','detail','low'].includes(quality))quality='auto';
+if(new URLSearchParams(location.search).get('quality')==='low')quality='low';
 $('sfQuality').value=quality;renderer.setQuality(quality);$('sfQuality').onchange=()=>{quality=$('sfQuality').value;renderer.setQuality(quality);try{localStorage.setItem('frostline-snowfront-quality',quality);}catch{}};
 $('sfRestart').onclick=()=>$('sfRestartConfirm').showModal();$('sfRestartNo').onclick=()=>$('sfRestartConfirm').close();
 $('sfRestartYes').onclick=()=>{state=newSnowfront();renderer.reset();outcomeShown=false;save();$('sfRestartConfirm').close();$('sfSettings').close();paused=false;stop();};
@@ -55,9 +59,10 @@ function businessTarget(){
   const p=state.player,b=p.bag;
   if(b.crate>0&&state.delivered<8)return['荷箱の納品',PADS.sale];
   if(b.raw>0)return['調理台へ',PADS.raw];
-  if(b.roast>0)return['交易台へ',PADS.sale];
+  if(b.roast>0)return['交易所へ',PADS.sale];
   if(state.roastStock>0)return['焼き肉を回収',PADS.roast];
   if(state.cashStock>0)return['売上を回収',PADS.cash];
+  if(state.rawStock>0)return['調理台の焼き上がりへ',PADS.roast];
   const enemy=state.enemies.filter(e=>state.mission===3&&state.wolfKills<6?e.kind==='wolf':true).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
   return enemy?['狩場へ',enemy]:['狩場へ',{x:0,y:-5}];
 }
@@ -81,10 +86,12 @@ let lastHud='';function hud(){
   $('sfMissionText').textContent=s.completed?'交易所は引き続き営業できます。':s.finale?'燻製の荷箱を積んだ隊商が、次の集落へ。':details[Math.min(s.mission,5)];
   $('sfProgress').max=goal.target;$('sfProgress').value=Math.min(goal.target,goal.value(s));
   const [label,point]=target(),distance=Math.round(Math.hypot(point.x-p.x,point.y-p.y));renderer.waypoint=point;$('sfNext').textContent=s.finale?'出発を見届ける':paused?'一時停止':`${label} · ${distance}m`;
-  const bagKey=JSON.stringify(p.bag);if(lastHud!==bagKey){lastHud=bagKey;$('sfBagItems').replaceChildren();for(const [type,title,symbol]of [['raw','獲物','beef'],['roast','焼肉','layers'],['fur','毛皮','snow'],['crate','荷箱','package']]){const span=document.createElement('span');span.append(icon(symbol,15),document.createTextNode(`${title} ${p.bag[type]}`));$('sfBagItems').append(span);}}
+  const bagKey=JSON.stringify(p.bag);if(lastHud!==bagKey){lastHud=bagKey;$('sfBagItems').replaceChildren();for(const [type,title,symbol]of [['raw','生肉','beef'],['roast','焼肉','layers'],['fur','毛皮','snow'],['crate','荷箱','package']]){const span=document.createElement('span');span.append(icon(symbol,19),document.createTextNode(`${title} ${p.bag[type]}`));$('sfBagItems').append(span);}}
   $('sfCapacity').textContent=`${Object.values(p.bag).reduce((a,b)=>a+b,0)} / 30`;
   const id=s.investment;$('sfInvestment').hidden=!id;
   if(id){const cost=investmentCost(s,id),paid=s.paid[id]||0;$('sfInvestmentName').textContent=id==='weapon'?`斧 Lv.${s.weapon+1}`:'未開拓の投資枠';$('sfInvestmentValue').textContent=`${paid} / ${cost}${p.cash===0?' · 現金不足':''}`;$('sfInvestmentProgress').max=cost;$('sfInvestmentProgress').value=paid;}
+  const context=facilityContext(s);$('sfContext').hidden=!!id||!context;
+  if(context){$('sfContextTitle').textContent=context.title;$('sfContextDetail').textContent=context.detail;$('sfContextStock').textContent=context.stock;}
   $('sfCelebrate').hidden=performance.now()>bannerUntil;
   if((s.status==='won'||s.status==='lost')&&!outcomeShown){
     outcomeShown=true;stop();const won=s.status==='won';$('sfOutcomeIcon').replaceChildren(icon(won?'trophy':'shield',52));$('sfOutcomeKicker').textContent=won?'EXPEDITION COMPLETE':'EXPEDITION PAUSED';$('sfOutcomeTitle').textContent=won?'交易路、開通。':'拠点で立て直そう';$('sfOutcomeText').textContent=won?`荷箱8箱が次の集落へ。${s.kills}体を討伐し、${s.sold}食を届けました。`:'直前に達成した開拓目標の状態から再開できます。';$('sfOutcomeAction').textContent=won?'開拓を続ける':'目標のチェックポイントから再開';$('sfOutcome').showModal();save();

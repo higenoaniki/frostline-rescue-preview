@@ -39,6 +39,7 @@ export class SnowfrontRenderer{
       root.traverse(n=>{if(n.isMesh){n.material=this.palette;n.castShadow=n.receiveShadow=true;}});this.catalog.set(root.userData.asset.replace('snowfront-',''),root);
     }
     this.player=this.actor('player');this.scene.add(this.player);this.chef=this.actor('chef');this.chef.position.set(-4,0,1.7);this.scene.add(this.chef);
+    this.trader=this.actor('merchant');this.scene.add(this.trader);
     for(const [id,model]of [['grill','grill'],['table','table'],['trade','trade'],['weapon','weapon']]){const p=placement[id],mesh=this.model(model);mesh.position.set(p.x,0,p.y);this.facilities.set(id,mesh);this.scene.add(mesh);}
     const prep=this.model('table');prep.position.set(-6.4,0,3.3);prep.scale.setScalar(.8);this.facilities.set('prep',prep);this.scene.add(prep);
     this.grillSteaks=[];for(let i=0;i<3;i++){const mesh=this.model('roast');mesh.position.set(-4+(i-1)*.38,1.12,3);this.grillSteaks.push(mesh);this.scene.add(mesh);}
@@ -55,7 +56,7 @@ export class SnowfrontRenderer{
     return root;
   }
   resize(){
-    const w=innerWidth,h=innerHeight,aspect=w/h,span=Math.max(21,15.5/aspect);
+    const w=innerWidth,h=innerHeight,aspect=w/h,span=Math.max(20,12/aspect);
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality==='low'?1.1:1.7));this.renderer.setSize(w,h,false);
     Object.assign(this.camera,{left:-span*aspect/2,right:span*aspect/2,top:span/2,bottom:-span/2});this.camera.updateProjectionMatrix();
   }
@@ -109,21 +110,22 @@ export class SnowfrontRenderer{
     let item=this.labels.get(key);
     if(!item){
       const canvas=document.createElement('canvas');canvas.width=512;canvas.height=176;const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=4;
-      const mesh=new T.Mesh(new T.PlaneGeometry(2.3,1.45),new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:T.DoubleSide}));mesh.rotation.x=-Math.PI/2;mesh.userData.outlineParameters={visible:false};mesh.renderOrder=2;this.scene.add(mesh);item={canvas,texture,mesh,text:null};this.labels.set(key,item);
+      const mesh=new T.Mesh(new T.PlaneGeometry(2.3,1.45),new T.MeshBasicMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,side:T.DoubleSide}));mesh.userData.outlineParameters={visible:false};mesh.renderOrder=2;this.scene.add(mesh);item={canvas,texture,mesh,text:null};this.labels.set(key,item);
     }
     if(item.text!==text){
       const c=item.canvas.getContext('2d');c.clearRect(0,0,512,176);c.lineWidth=6;c.strokeStyle='#fff';c.fillStyle='rgba(66,80,86,.52)';c.beginPath();c.roundRect(8,8,496,160,20);c.fill();c.stroke();
-      const lines=text.split('\n');c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.shadowColor='rgba(35,44,49,.4)';c.shadowBlur=3;lines.forEach((line,i)=>{c.font=`800 ${i===1&&line.length<10?72:46}px system-ui`;c.fillText(line,256,lines.length===1?88:49+i*71,470);});item.texture.needsUpdate=true;item.text=text;
+      const lines=text.split('\n');c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff';c.shadowColor='rgba(35,44,49,.4)';c.shadowBlur=3;lines.forEach((line,i)=>{c.font=`800 ${i===1&&line.length<10?72:60}px system-ui`;c.fillText(line,256,lines.length===1?88:49+i*71,470);});item.texture.needsUpdate=true;item.text=text;
     }
     item.mesh.material.color.setHex(color);return item.mesh;
   }
   updatePads(s){
+    const uiBottom=(document.querySelector('.sf-objective')?.getBoundingClientRect().bottom??168)+27;
     const keys=['raw','roast','sale','cash','weapon','east','west','smoker','smoked','collector','hunter','porter'];
     for(const key of keys){
       const p=PADS[key];let visible=true,text=names[key],color=0xffffff;
       if(key==='raw')text+='\n'+s.rawStock;
       if(key==='roast')text+='\n'+s.roastStock;
-      if(key==='sale')text+='\n'+(s.mission>=4?`${s.delivered}/8 箱`:`在庫 ${s.marketStock}`);
+      if(key==='sale')text='交易所\n'+(s.mission>=4?`荷箱 ${s.delivered}/8`:`焼肉1食 → 6`);
       if(key==='cash'){text+='\n'+s.cashStock;color=0xc4ff9d;}
       if(key==='weapon'){text=s.weapon===3?'斧 Lv.3\nMAX':`斧 Lv.${s.weapon} → ${s.weapon+1}\n${s.paid.weapon||0} / ${investmentCost(s,'weapon')}`;}
       if(Object.hasOwn(BUILD_COST,key)){
@@ -133,7 +135,18 @@ export class SnowfrontRenderer{
       }
       if(key==='smoker'&&s.built.smoker){visible=true;text=`燻製工房\n焼肉 ${s.smokeRaw} / 毛皮 ${s.smokeFur}`;color=0xffffff;}
       if(key==='smoked'){visible=s.built.smoker;text+='\n'+s.crateStock;}
-      const mesh=this.label(key,text,color);mesh.position.set(p.x,.105,p.y);mesh.visible=visible;
+      const anchors={raw:{x:-6.4,y:3.3},roast:{x:-1.5,y:3.9},sale:{x:3.6,y:16},cash:{x:6.7,y:13.5}};
+      const a=anchors[key]??placement[key]??p,mesh=this.label(key,text,color);
+      const stockCount=key==='raw'?s.rawStock:key==='roast'?s.roastStock:0;
+      mesh.position.set(a.x,key==='sale'?3.4:key==='cash'?1.4:stockCount>0?2.25+Math.ceil(Math.min(24,stockCount)/2)*.145:2.8,a.y);mesh.quaternion.copy(this.camera.quaternion);
+      const units=(this.camera.right-this.camera.left)/innerWidth;
+      mesh.scale.set(124*units/2.3,46*units/1.45,1);
+      const screen=mesh.position.clone().project(this.camera),sx=(screen.x+1)*innerWidth/2,sy=(1-screen.y)*innerHeight/2;
+      const close=Math.hypot(p.x-s.player.x,p.y-s.player.y)<1.7||(['sale','cash'].includes(key)&&Math.hypot(PADS.sale.x-s.player.x,PADS.sale.y-s.player.y)<1.7);
+      mesh.visible=visible&&!close&&sx>70&&sx<innerWidth-70&&sy>uiBottom&&sy<innerHeight-115&&screen.z>-1&&screen.z<1;
+      let pad=this.labels.get(key).pad;
+      if(!pad){pad=new T.Mesh(new T.RingGeometry(.72,.8,4,1,Math.PI/4),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85,depthWrite:false}));pad.rotation.x=-Math.PI/2;pad.userData.outlineParameters={visible:false};this.scene.add(pad);this.labels.get(key).pad=pad;}
+      pad.position.set(p.x,.11,p.y);pad.visible=visible;
     }
     for(const id of ['smoker','collector','hunter','porter']){
       if(!s.built[id]||this.facilities.has(id))continue;
@@ -142,14 +155,14 @@ export class SnowfrontRenderer{
     for(const mesh of this.facilities.values())if(mesh.userData.birth!==undefined){const t=Math.min(1,(this.visualTime-mesh.userData.birth)/.6);mesh.scale.setScalar(t<1?1-Math.cos(t*Math.PI/2)*Math.exp(-t*3):1);}
   }
   pose(root,p,dt,kind='human'){
-    root.userData.clock+=dt*(p.moving?9:1.3);const clock=root.userData.clock,j=root.userData.joints;root.position.set(p.x,0,p.y);
+    root.userData.clock+=dt*(p.moving?(kind==='human'?14:9):1.3);const clock=root.userData.clock,j=root.userData.joints;root.position.set(p.x,0,p.y);
     const desired=Math.PI/2-(p.motion?.angle??p.facing);
     if(p.motion?.spin)root.rotation.y=desired+Math.min(1,p.motion.time/.44)*Math.PI*2;
     else root.rotation.y+=Math.atan2(Math.sin(desired-root.rotation.y),Math.cos(desired-root.rotation.y))*Math.min(1,dt*15);
     root.position.y=p.moving?Math.abs(Math.sin(clock))*.055:Math.sin(clock)*.012;
     if(kind==='human'){
       for(const side of ['left','right']){
-        const swing=p.moving?Math.sin(clock)*(side==='left'?1:-1)*.55:0;
+        const swing=p.moving?Math.sin(clock)*(side==='left'?1:-1)*.8:0;
         j['leg-'+side].rotation.x=swing;j['shin-'+side].rotation.x=Math.max(0,-swing)*.55;
         j['arm-'+side].rotation.x=-swing*.55;j['forearm-'+side].rotation.x=-.12;
       }
@@ -165,15 +178,15 @@ export class SnowfrontRenderer{
   stacks(root,bag,cash=0){
     const key=JSON.stringify([bag,cash]);if(root.userData.stackKey===key)return;root.userData.stackKey=key;const stack=root.userData.stack;stack.clear();let y=0;
     for(const type of ['raw','roast','fur','crate'])for(let i=0;i<Math.min(bag[type]||0,22);i++){
-      const mesh=this.model(type);mesh.position.set(0,y,0);mesh.rotation.y=(i%2)*.1;stack.add(mesh);y+=type==='crate'?.45:type==='fur'?.16:.105;
+      const mesh=this.model(type);mesh.scale.setScalar(1.35);mesh.position.set(0,y,0);mesh.rotation.y=(i%2)*.1;stack.add(mesh);y+=type==='crate'?.61:type==='fur'?.22:.145;
     }
-    for(let i=0;i<Math.min(22,Math.ceil(cash/6));i++){const mesh=this.model('cash');mesh.position.set(.37,i*.085,-.04);mesh.scale.setScalar(.8);stack.add(mesh);}
+    for(let i=0;i<Math.min(22,Math.ceil(cash/6));i++){const mesh=this.model('cash');mesh.position.set(.68,i*.115,-.04);mesh.scale.setScalar(1.2);stack.add(mesh);}
   }
   pile(id,type,count,p,height=1.2){
     const old=this.stock.get(id);if(old?.count===count)return;
     if(old)this.scene.remove(old.group);const group=new T.Group();const shown=Math.min(24,count);
-    const spacing=type==='crate'?.7:.42,step=type==='crate'?.45:type==='fur'?.16:.105;
-    for(let i=0;i<shown;i++){const mesh=this.model(type);mesh.position.set((i%2)*spacing-spacing/2,Math.floor(i/2)*step,0);group.add(mesh);}
+    const spacing=type==='crate'?.85:.75,step=type==='crate'?.61:type==='fur'?.22:.145;
+    for(let i=0;i<shown;i++){const mesh=this.model(type);mesh.scale.setScalar(1.35);mesh.position.set((i%2)*spacing-spacing/2,Math.floor(i/2)*step,0);group.add(mesh);}
     group.position.set(p.x,height,p.y);this.scene.add(group);this.stock.set(id,{group,count});
   }
   health(root,hp,max=100){
@@ -181,7 +194,7 @@ export class SnowfrontRenderer{
     if(!bar){
       const g=new T.Group(),back=new T.Mesh(new T.PlaneGeometry(1.08,.18),new T.MeshBasicMaterial({color:0x34474c})),fill=new T.Mesh(new T.PlaneGeometry(.96,.09),new T.MeshBasicMaterial({color:0x70d9a7}));fill.position.z=.015;g.add(back,fill);g.userData.outlineParameters={visible:false};g.userData.fill=fill;this.scene.add(g);root.userData.health=g;bar=g;
     }
-    bar.position.copy(root.position);bar.position.y+=2.25;bar.quaternion.copy(this.camera.quaternion);const ratio=Math.max(0,hp/max);bar.userData.fill.scale.x=ratio;bar.userData.fill.position.x=-(1-ratio)*.48;
+    bar.position.copy(root.position);bar.position.y+=2.25;bar.quaternion.copy(this.camera.quaternion);bar.scale.setScalar(1.3);if(root===this.player)bar.position.addScaledVector(new T.Vector3().setFromMatrixColumn(this.camera.matrixWorld,0),.9);const ratio=Math.max(0,hp/max);bar.userData.fill.scale.x=ratio;bar.userData.fill.position.x=-(1-ratio)*.48;
   }
   event(e){
     if(e.type==='sell'){this.event({type:'transfer',item:'roast',from:{x:3.6,y:16},to:{x:3.6,y:19.5}});}
@@ -204,12 +217,14 @@ export class SnowfrontRenderer{
     if(!this.player)return;this.visualTime+=dt;this.frameCount++;
     if(this.campRevision!==String(s.built.east)+String(s.built.west))this.buildCamp(s);
     this.pose(this.player,s.player,dt);this.stacks(this.player,s.player.bag,s.player.cash);this.health(this.player,s.player.hp);
+    this.player.userData.axe.scale.setScalar(s.weapon===3?1.2:1);
     this.footRing.position.set(s.player.x,.12,s.player.y);
     const dx=(this.waypoint?.x??s.player.x)-s.player.x,dy=(this.waypoint?.y??s.player.y)-s.player.y,d=Math.hypot(dx,dy);
     this.guide.visible=d>2&&s.status==='playing'&&!s.finale;
     if(this.guide.visible){this.guide.position.set(s.player.x+dx/d*1.25,.14,s.player.y+dy/d*1.25);this.guide.rotation.set(Math.PI/2,0,-Math.atan2(dx,dy));}
     this.pose(this.chef,{x:-4,y:1.7,facing:Math.PI/2,moving:false},dt);this.chef.userData.joints['arm-right'].rotation.x=-.5+Math.sin(this.visualTime*4)*.2;
-    this.focus.x=lerp(this.focus.x,s.player.x,Math.min(1,dt*5));this.focus.z=lerp(this.focus.z,s.player.y-1,Math.min(1,dt*5));
+    this.pose(this.trader,{x:3.6,y:17.6,facing:Math.PI/2,moving:false},dt);this.trader.userData.joints['arm-right'].rotation.x=-.55+Math.sin(this.visualTime*3)*.14;
+    const follow=1-Math.exp(-dt*14);this.focus.x=lerp(this.focus.x,s.player.x,follow);this.focus.z=lerp(this.focus.z,s.player.y-1,follow);
     this.camera.position.copy(this.focus).add(new T.Vector3(21,29,29));this.camera.lookAt(this.focus);
     for(const {pivot,side}of this.gateLeaves||[])pivot.rotation.y=side*s.gate*1.55;
     for(const {pivot,side}of this.serviceLeaves||[])pivot.rotation.y=side*s.serviceGate*1.55;
@@ -226,7 +241,7 @@ export class SnowfrontRenderer{
     for(const [id,mesh]of this.actors)if(!live.has(id)){this.scene.remove(mesh);if(mesh.userData.health)this.scene.remove(mesh.userData.health);this.actors.delete(id);}
     const drops=new Set();for(const d of s.drops){drops.add(d.id);let item=this.loot.get(d.id);if(!item||item.userData.amount!==d.amount){if(item)this.scene.remove(item);item=new T.Group();for(let i=0;i<Math.min(d.amount,5);i++){const mesh=this.model(d.type);mesh.position.set((i%2)*.25,Math.floor(i/2)*.11,0);mesh.rotation.y=i*.25;item.add(mesh);}item.userData.amount=d.amount;this.scene.add(item);this.loot.set(d.id,item);}item.position.set(d.x,.13,d.y);}
     for(const [id,item]of this.loot)if(!drops.has(id)){this.scene.remove(item);this.loot.delete(id);}
-    this.pile('raw','raw',s.rawStock,{x:-6.4,y:3.3},1);this.pile('roast','roast',s.roastStock,{x:-1.5,y:3.9});this.pile('sale','roast',s.marketStock,{x:3.1,y:16});this.pile('cash','cash',Math.ceil(s.cashStock/6),{x:6,y:14.3},.15);
+    this.pile('raw','raw',s.rawStock,{x:-6.4,y:3.3},1);this.pile('roast','roast',s.roastStock,{x:-1.5,y:3.9});this.pile('sale','roast',s.marketStock,{x:3.1,y:16});this.pile('cash','cash',Math.ceil(s.cashStock/6),{x:6.5,y:15},.15);
     if(s.built.smoker)this.pile('crates','crate',s.crateStock,{x:15.6,y:4.5},.18);
     this.grillSteaks.forEach((mesh,i)=>{mesh.rotation.y=Math.sin(this.visualTime*1.2+i)*.04;mesh.visible=s.rawStock>0||s.roastStock>0;});
     for(const t of [...this.transfers]){t.time+=dt;const p=Math.min(1,t.time/(t.bolt?.2:.4));t.mesh.position.set(lerp(t.from.x,t.to.x,p),t.bolt?1.3:1+Math.sin(p*Math.PI)*1.1,lerp(t.from.y,t.to.y,p));t.mesh.rotation.y+=dt*4;if(p===1){this.scene.remove(t.mesh);if(t.bolt){t.mesh.geometry.dispose();t.mesh.material.dispose();}this.transfers.splice(this.transfers.indexOf(t),1);}}

@@ -1,6 +1,7 @@
 import {sweptTargets} from './melee.js';
 
 export const SNOWFRONT_KEY='frostline-snowfront-v1';
+export const SNOWFRONT_SPEED=8;
 export const PADS={
   raw:{x:-4,y:5.4},roast:{x:-1.5,y:5.4},sale:{x:3.6,y:13.5},cash:{x:6,y:13.5},
   weapon:{x:-4,y:10.3},east:{x:6,y:8},west:{x:-6,y:8},
@@ -206,7 +207,7 @@ function interaction(s,dt){
     if(b.crate>0&&s.delivered<8)transfer(s,b,'crate',s,'delivered',1,p,PADS.sale);
     else if(s.marketStock<60)transfer(s,b,'roast',s,'marketStock',3,p,PADS.sale);
   }
-  if(near(p,PADS.cash))transfer(s,s,'cashStock',p,'cash',Math.min(24,s.cashStock),PADS.cash,p);
+  if(near(p,PADS.cash)||near(p,PADS.sale))transfer(s,s,'cashStock',p,'cash',Math.min(24,s.cashStock),PADS.cash,p);
   if(s.built.smoker&&near(p,PADS.smoker)){
     if(s.smokeRaw<24)transfer(s,b,'roast',s,'smokeRaw',3,p,PADS.smoker);
     if(s.smokeFur<8)transfer(s,b,'fur',s,'smokeFur',1,p,PADS.smoker);
@@ -225,7 +226,7 @@ export function tickSnowfront(s,dt,input={x:0,y:0}){
   if(!Number.isFinite(dt)||dt<=0||s.status!=='playing')return;
   dt=Math.min(dt,.05);s.time+=dt;
   const p=s.player,amount=Math.min(1,Math.hypot(input.x,input.y));p.moving=false;
-  if(amount>0){const length=Math.hypot(input.x,input.y);moveActor(s,p,{x:p.x+input.x/length,y:p.y+input.y/length},5.4*amount,dt);}
+  if(amount>0){const length=Math.hypot(input.x,input.y);moveActor(s,p,{x:p.x+input.x/length,y:p.y+input.y/length},SNOWFRONT_SPEED*amount,dt);}
   collect(s,p);invest(s,dt);interaction(s,dt);production(s,dt);trading(s,dt);collector(s,dt);porter(s,dt);playerCombat(s,dt);enemyCombat(s,dt);
   s.spawnTimer+=dt;const raw=s.drops.filter(d=>d.type==='raw').reduce((n,d)=>n+d.amount,0);
   if(s.enemies.length<(s.built.east?19:14)&&raw<36&&s.spawnTimer>1.5){s.spawnTimer=0;spawnEnemy(s);}

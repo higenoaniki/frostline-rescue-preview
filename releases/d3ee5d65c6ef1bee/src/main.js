@@ -2,6 +2,9 @@ import { ToonCampRenderer as ThreeGameRenderer } from './toon-camp-renderer.js';
 import { WORLD as world, SAFE as safe, STATIONS as stations, HUNTING, CONVEYOR_PATH, enemyRules, enemySpawnPoint } from "./world-config.js";
 import { PLAYER_SPEED, SALE_PRICE, STORAGE_LIMIT, UPGRADE_SPECS, WEAPON_DAMAGE, upgradeCost, upgradeCap, facilityAvailable, facilityBuilt, facilityName, goalText, resetWork, resetUpgrades, resetPaid, resetBuilt, requiredWorkLevel } from './progression.js';
 import { advanceObjective } from './campaign.js';
+import {chapterFor,completeChapter} from './chapters.js';
+import {chapterPrelude} from './chapter-prelude.js';
+import {stageUrl} from './stage-travel.js';
 import { readCampaign, writeCampaign, restoreCampaign } from './persistence.js';
 import { resetAutomation, updateAutomation } from './automation.js';
 import { resetShipping, updateShipping, shippingStatus } from './shipping.js';
@@ -247,6 +250,7 @@ function start() {
   updateHud();
   if (TOP_MENU_ENABLED) showHome();
   else enterRegion('valley');
+  if (!TOP_MENU_ENABLED) chapterPrelude('camp', {onOpen:()=>{state.paused=true;},onClose:()=>{state.paused=false;resetTouch();}});
   window.addEventListener('pagehide', () => { audio.setActivity({ hidden: true }); flushCampaign(); });
   window.addEventListener('frostline:fatal', () => {
     audio.setActivity({ hidden: true });
@@ -1057,6 +1061,7 @@ function checkStageClear() {
   ensureBoss();
   if (result.final) {
     if (state.saveEnabled) { try { markRegionComplete(localStorage, state.region); } catch {} }
+    if (state.saveEnabled) { try { completeChapter(localStorage,'camp'); } catch {} }
     state.endingView = true;
     const destination = state.expedition.flight ?? REFUGE_POSITION;
     renderer3d.focus.set(destination.x - world.width / 2, 120, destination.y - world.height / 2);
@@ -1064,7 +1069,7 @@ function checkStageClear() {
     state.paused = true; state.investment = resetInvestment(); resetTouch(); state.input.keys.clear();
     burst(state.player.x, state.player.y, '#ffd060', 64);
     const continueCamp = () => { state.endingView = false; state.paused = false; renderer3d.focus.set(state.player.x - world.width / 2, 0, state.player.y - world.height / 2); hud.modal.classList.add('hidden'); };
-    showModal('越冬補給 完了', `${regionFor(state.region).name} CLEAR\n氷核で避難所の暖房が復旧。\n保存食18・毛皮4・鉱石4が届きました。\n討伐 ${state.work.kills} · 出荷 ${state.work.shipped}`, TOP_MENU_ENABLED ? '遠征を選ぶ' : '拠点を続ける', TOP_MENU_ENABLED ? showHome : continueCamp, TOP_MENU_ENABLED ? '拠点を続ける' : '', TOP_MENU_ENABLED ? continueCamp : null);
+    showModal('越冬補給 完了', `${regionFor(state.region).name} CLEAR\n${chapterFor('camp').ending}\n討伐 ${state.work.kills} · 出荷 ${state.work.shipped}`, '次へ · 白霧の峠', ()=>{flushCampaign();location.assign(stageUrl(location.href,'pass'));}, '拠点を続ける', continueCamp);
     flushCampaign(); return;
   }
   state.messageTimer = 0;

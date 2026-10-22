@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.js';
-import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
+import { mergeCompatibleGeometries } from './geometry-batching.js';
 import { SculptedArtModels as ArtModels } from './sculpted-art.js';
 import { WORLD, SAFE, STATIONS, CONVEYOR_PATH, beltPoint, toX, toZ } from './world-config.js';
 import { UPGRADE_SPECS, upgradeCost, upgradeLevel, upgradeCap, facilityAvailable, facilityBuilt, plotName, stagePlan, goalValue } from './progression.js';
@@ -197,27 +197,33 @@ export class ThreeGameRenderer {
 
   batch(group, cellSize = 0) {
     // Merge only rigid scenery; joints and inventories remain independent meshes.
-    group.updateMatrixWorld(true); const cells = new Map();
-    group.traverse((mesh) => {
-      if (!mesh.isMesh) return;
-      const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
-      geometry.applyMatrix4(mesh.matrixWorld);
-      let cell = 'global';
-      if (cellSize) {
-        geometry.computeBoundingBox(); const box = geometry.boundingBox, size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
-        if (size.x < cellSize && size.z < cellSize) cell = `${Math.floor(center.x / cellSize)}:${Math.floor(center.z / cellSize)}`;
+    group.updateMatrixWorld(true); const cells = new Map(), prepared = [], out = new THREE.Group();
+    try {
+      group.traverse((mesh) => {
+        if (!mesh.isMesh) return;
+        const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+        prepared.push(geometry);
+        geometry.applyMatrix4(mesh.matrixWorld);
+        let cell = 'global';
+        if (cellSize) {
+          geometry.computeBoundingBox(); const box = geometry.boundingBox, size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+          if (size.x < cellSize && size.z < cellSize) cell = `${Math.floor(center.x / cellSize)}:${Math.floor(center.z / cellSize)}`;
+        }
+        if (!cells.has(cell)) cells.set(cell, new Map());
+        const buckets = cells.get(cell);
+        if (!buckets.has(mesh.material)) buckets.set(mesh.material, []);
+        buckets.get(mesh.material).push(geometry);
+      });
+      for (const buckets of cells.values()) for (const [material, geometries] of buckets) {
+        for (const merged of mergeCompatibleGeometries(geometries)) {
+          const mesh = new THREE.Mesh(merged, material); mesh.castShadow = mesh.receiveShadow = true; out.add(mesh);
+        }
       }
-      if (!cells.has(cell)) cells.set(cell, new Map());
-      const buckets = cells.get(cell);
-      if (!buckets.has(mesh.material)) buckets.set(mesh.material, []);
-      buckets.get(mesh.material).push(geometry);
-    });
-    const out = new THREE.Group();
-    for (const buckets of cells.values()) for (const [material, geometries] of buckets) {
-      const merged = mergeGeometries(geometries);
-      if (!merged) throw new Error('Could not merge scenery geometry');
-      const mesh = new THREE.Mesh(merged, material); mesh.castShadow = mesh.receiveShadow = true; out.add(mesh);
-      geometries.forEach((g) => g.dispose());
+    } catch (error) {
+      out.traverse(mesh => { if (mesh.isMesh) mesh.geometry.dispose(); });
+      throw error;
+    } finally {
+      prepared.forEach(geometry => geometry.dispose());
     }
     return out;
   }

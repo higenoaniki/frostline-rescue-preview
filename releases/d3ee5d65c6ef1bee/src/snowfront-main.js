@@ -1,7 +1,9 @@
 import{newSnowfront,tickSnowfront,saveSnowfront,restoreSnowfront,retrySnowfront,SNOWFRONT_KEY,MISSIONS,PADS,BUILD_COST,investmentCost}from'./snowfront-state.js';
 import{SnowfrontRenderer}from'./snowfront-renderer.js';
 import{bindFloatingStick}from'./touch-controls.js';
-import{bindStageTravel}from'./stage-travel.js';
+import{bindStageTravel,stageUrl}from'./stage-travel.js';
+import{chapterFor,completeChapter}from'./chapters.js';
+import{chapterPrelude}from'./chapter-prelude.js';
 import{GameAudio}from'./game-audio.js';
 import{buttonIcon,icon}from'./icons.js';
 import{facilityContext}from'./snowfront-ui.js';
@@ -17,7 +19,7 @@ const root=document.createElement('section');root.id='snowfrontRoot';root.classN
  <div class="sf-tools" data-game-ui><button id="sfTravelButton" type="button"></button><button id="sfSettingsButton" type="button"></button><button id="sfSound" type="button"></button><button id="sfPause" type="button"></button></div>
  <footer class="sf-bag" data-game-ui><div id="sfBagItems"></div><span id="sfCapacity"></span></footer>
  <div class="joystick" id="sfJoystick" aria-hidden="true"><span id="sfStick"></span></div>
- <dialog id="sfOutcome" class="sf-dialog" data-game-ui><div id="sfOutcomeIcon"></div><small id="sfOutcomeKicker"></small><h2 id="sfOutcomeTitle"></h2><p id="sfOutcomeText"></p><button id="sfOutcomeAction" type="button"></button><button id="sfOutcomeMap" class="sf-secondary" type="button">遠征マップ</button></dialog>
+ <dialog id="sfOutcome" class="sf-dialog" data-game-ui><div id="sfOutcomeIcon"></div><small id="sfOutcomeKicker"></small><h2 id="sfOutcomeTitle"></h2><p id="sfOutcomeText"></p><button id="sfOutcomeAction" type="button"></button><button id="sfOutcomeContinue" class="sf-secondary" type="button" hidden>交易を続ける</button><button id="sfOutcomeMap" class="sf-secondary" type="button">遠征マップ</button></dialog>
  <dialog id="sfSettings" class="sf-dialog sf-settings" data-game-ui><header><h2>設定</h2><button id="sfSettingsClose" type="button" aria-label="閉じる"></button></header><label>画質<select id="sfQuality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label>BGM<input id="sfMusic" type="range" min="0" max="100" step="5"></label><label>効果音<input id="sfEffects" type="range" min="0" max="100" step="5"></label><button id="sfRestart" class="sf-secondary" type="button">この遠征を最初から</button><p class="sf-save-note">他の遠征の進捗は変更されません。</p></dialog>
  <dialog id="sfRestartConfirm" class="sf-dialog" data-game-ui><h2>雪原交易路をやり直す？</h2><p>この遠征の施設・所持品・開拓状況を最初に戻します。</p><button id="sfRestartYes" type="button">最初から始める</button><button id="sfRestartNo" class="sf-secondary" type="button">戻る</button></dialog>`;
 document.querySelector('.shell').append(root);
@@ -44,9 +46,11 @@ $('sfQuality').value=quality;renderer.setQuality(quality);$('sfQuality').onchang
 $('sfRestart').onclick=()=>$('sfRestartConfirm').showModal();$('sfRestartNo').onclick=()=>$('sfRestartConfirm').close();
 $('sfRestartYes').onclick=()=>{state=newSnowfront();renderer.reset();outcomeShown=false;save();$('sfRestartConfirm').close();$('sfSettings').close();paused=false;stop();};
 $('sfOutcomeAction').onclick=()=>{
-  if(state.status==='lost'){state=retrySnowfront(state);renderer.reset();}else if(state.status==='won'){state.status='playing';state.freeplay=true;}else paused=false;
+  if(state.status==='won'){save();location.assign(stageUrl(location.href,'highland'));return;}
+  if(state.status==='lost'){state=retrySnowfront(state);renderer.reset();}else paused=false;
   outcomeShown=false;$('sfOutcome').close();paused=false;stop();save();
 };
+$('sfOutcomeContinue').onclick=()=>{state.status='playing';state.freeplay=true;outcomeShown=false;$('sfOutcome').close();paused=false;stop();save();};
 $('sfOutcomeMap').onclick=()=>$('sfTravelButton').click();
 $('sfOutcome').addEventListener('cancel',event=>event.preventDefault());
 document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,dialog'))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D'].includes(e.key)){e.preventDefault();input.keys.add(e.key.toLowerCase());audio.unlock();}});
@@ -94,7 +98,9 @@ let lastHud='';function hud(){
   if(context){$('sfContextTitle').textContent=context.title;$('sfContextDetail').textContent=context.detail;$('sfContextStock').textContent=context.stock;}
   $('sfCelebrate').hidden=performance.now()>bannerUntil;
   if((s.status==='won'||s.status==='lost')&&!outcomeShown){
-    outcomeShown=true;stop();const won=s.status==='won';$('sfOutcomeIcon').replaceChildren(icon(won?'trophy':'shield',52));$('sfOutcomeKicker').textContent=won?'EXPEDITION COMPLETE':'EXPEDITION PAUSED';$('sfOutcomeTitle').textContent=won?'交易路、開通。':'拠点で立て直そう';$('sfOutcomeText').textContent=won?`荷箱8箱が次の集落へ。${s.kills}体を討伐し、${s.sold}食を届けました。`:'直前に達成した開拓目標の状態から再開できます。';$('sfOutcomeAction').textContent=won?'開拓を続ける':'目標のチェックポイントから再開';$('sfOutcome').showModal();save();
+    outcomeShown=true;stop();const won=s.status==='won';$('sfOutcomeIcon').replaceChildren(icon(won?'trophy':'shield',52));$('sfOutcomeKicker').textContent=won?'CHAPTER 03 COMPLETE':'EXPEDITION PAUSED';$('sfOutcomeTitle').textContent=won?'交易路、開通。':'拠点で立て直そう';$('sfOutcomeText').textContent=won?chapterFor('snowfront').ending:'直前に達成した開拓目標の状態から再開できます。';$('sfOutcomeAction').textContent=won?'次へ · 星灯りの高地':'目標のチェックポイントから再開';$('sfOutcomeContinue').hidden=!won;$('sfOutcome').showModal();
+    if(won&&!location.pathname.startsWith('/review/')){try{completeChapter(localStorage,'snowfront');}catch{}}
+    save();
   }
 }
 function frame(t){
@@ -112,4 +118,5 @@ function frame(t){
 }
 function isSafeForAudio(){return state.player.y>=0;}
 renderer.render(state,0);hud();canvas.dataset.art='snowfront-v1';window.dispatchEvent(new Event('frostline:ready'));requestAnimationFrame(frame);
+chapterPrelude('snowfront',{onOpen:()=>{paused=true;stop();},onClose:()=>{paused=false;stop();}});
 export{state,renderer,tickSnowfront,saveSnowfront};

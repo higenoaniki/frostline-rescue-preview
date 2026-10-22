@@ -14,7 +14,7 @@ export class SnowfrontRenderer{
     this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0xe7eef3);this.scene.fog=new T.Fog(0xe7eef3,48,105);
     this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.NeutralToneMapping;this.renderer.toneMappingExposure=1;
-    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;
+    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;
     this.effect=new OutlineEffect(this.renderer,{defaultThickness:.0017,defaultColor:[.25,.29,.32],defaultAlpha:.65});
     this.camera=new T.OrthographicCamera(-15,15,15,-15,.1,150);this.focus=new T.Vector3(0,0,6);this.visualTime=0;this.frameCount=0;
     this.scene.add(new T.HemisphereLight(0xf3f8ff,0xb5bec9,1.2));
@@ -60,7 +60,7 @@ export class SnowfrontRenderer{
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality==='low'?1.1:1.7));this.renderer.setSize(w,h,false);
     Object.assign(this.camera,{left:-span*aspect/2,right:span*aspect/2,top:span/2,bottom:-span/2});this.camera.updateProjectionMatrix();
   }
-  setQuality(mode){this.quality=['auto','detail','low'].includes(mode)?mode:'auto';this.effect.enabled=this.quality!=='low';this.renderer.shadowMap.enabled=this.quality!=='low';this.resize();}
+  setQuality(mode){this.quality=['auto','detail','low'].includes(mode)?mode:'auto';const shadows=this.quality!=='low';this.effect.enabled=shadows;this.renderer.shadowMap.enabled=shadows;this.sun.castShadow=shadows;this.renderer.shadowMap.needsUpdate=true;this.scene.traverse(n=>{if(n.isMesh){for(const m of Array.isArray(n.material)?n.material:[n.material])m.needsUpdate=true;}});this.resize();}
   reset(){
     for(const mesh of this.actors.values()){this.scene.remove(mesh);if(mesh.userData.health)this.scene.remove(mesh.userData.health);}this.actors.clear();
     for(const mesh of this.loot.values())this.scene.remove(mesh);this.loot.clear();

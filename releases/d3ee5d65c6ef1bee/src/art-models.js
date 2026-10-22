@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three.module.js';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
+import { mergeCompatibleGeometries } from './geometry-batching.js';
 import { explorer, frostBeast, processingWorkshop, winterForge, supplyBeacon, upgradeWorkshop } from './winter-art.js';
 import {terrainPbrMaterial} from './pbr-materials.js';
 
@@ -124,22 +125,28 @@ export class ArtModels {
   mergeRigid(group, keep = []) {
     group.updateMatrixWorld(true);
     const inverse = group.matrixWorld.clone().invert();
-    const buckets = new Map();
+    const buckets = new Map(), prepared = [], merged = [];
     const children = group.children.filter((child) => !keep.includes(child.name));
-    for (const child of children) child.traverse((mesh) => {
-      if (!mesh.isMesh) return;
-      const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
-      geo.applyMatrix4(inverse.clone().multiply(mesh.matrixWorld));
-      if (!buckets.has(mesh.material)) buckets.set(mesh.material, []);
-      buckets.get(mesh.material).push(geo);
-    });
-    children.forEach((child) => group.remove(child));
-    for (const [material, geometries] of buckets) {
-      const geometry = mergeGeometries(geometries);
-      if (!geometry) throw new Error('Could not merge rigid model parts');
-      this.mesh(group, geometry, material);
-      geometries.forEach((geo) => geo.dispose());
+    try {
+      for (const child of children) child.traverse((mesh) => {
+        if (!mesh.isMesh) return;
+        const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+        prepared.push(geo);
+        geo.applyMatrix4(inverse.clone().multiply(mesh.matrixWorld));
+        if (!buckets.has(mesh.material)) buckets.set(mesh.material, []);
+        buckets.get(mesh.material).push(geo);
+      });
+      for (const [material, geometries] of buckets) {
+        for (const geometry of mergeCompatibleGeometries(geometries)) merged.push({geometry, material});
+      }
+    } catch (error) {
+      merged.forEach(({geometry}) => geometry.dispose());
+      throw error;
+    } finally {
+      prepared.forEach(geometry => geometry.dispose());
     }
+    children.forEach(child => group.remove(child));
+    for (const {geometry, material} of merged) this.mesh(group, geometry, material);
     return group;
   }
 

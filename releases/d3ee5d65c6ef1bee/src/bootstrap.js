@@ -41,7 +41,9 @@
     message.textContent = '読み込みに時間がかかっています。通信状態を確認してください。';
     retry.hidden = false;
   }, 20000);
-  const gameModule = new URLSearchParams(location.search).get('stage') === 'snowfront' ? './snowfront-main.js' : './main.js';
+  const stage = new URLSearchParams(location.search).get('stage');
+  const gameModule = ['pass', 'highland', 'beacon'].includes(stage) ? './story-main.js'
+    : new URLSearchParams(location.search).get('stage') === 'snowfront' ? './snowfront-main.js' : './main.js';
   import(gameModule).catch(error => {
     const gpu = /webgl|context|gpu/i.test(error.message);
     failure('ゲームの起動に失敗しました', gpu

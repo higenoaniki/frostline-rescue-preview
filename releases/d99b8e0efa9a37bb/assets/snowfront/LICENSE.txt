@@ -1,0 +1,12 @@
+Frostline Rescue - original Snowfront stage artwork
+
+Copyright (c) 2026 Frostline Rescue project. All rights reserved.
+
+Original project-created models, vertex-color palettes and native skeletons.
+No third-party game screenshots, meshes, logos or textures are included.
+The user-provided screenshot is a visual/gameplay reference only and is not
+embedded in the game. This notice does not license the reference artwork.
+
+Editable production source: art-source/production/snowfront.blend
+Reproducible authoring script: scripts/create-snowfront-art.py
+Third-party renderer licensing: src/vendor/THREE-LICENSE.txt

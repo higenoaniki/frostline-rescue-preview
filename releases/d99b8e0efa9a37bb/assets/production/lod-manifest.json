@@ -1,0 +1,92 @@
+{
+  "revision": "natural-v22",
+  "baseSha256": "6629beec5e23391277c9f9178a693b4c81355cb1d5a102086471a758a7e0ab2c",
+  "tiers": [
+    {
+      "tier": 1,
+      "surfaces": [
+        {
+          "atlas": "detail",
+          "file": "explorer-lod1-detail.glb",
+          "triangles": 2240,
+          "bytes": 658764
+        },
+        {
+          "atlas": "eyes",
+          "file": "explorer-lod1-eyes.glb",
+          "triangles": 8160,
+          "bytes": 830736
+        },
+        {
+          "atlas": "gear",
+          "file": "explorer-lod1-gear.glb",
+          "triangles": 110073,
+          "bytes": 10700984
+        },
+        {
+          "atlas": "hair",
+          "file": "explorer-lod1-hair.glb",
+          "triangles": 11920,
+          "bytes": 1098332
+        },
+        {
+          "atlas": "head",
+          "file": "explorer-lod1-head.glb",
+          "triangles": 134592,
+          "bytes": 6857132
+        },
+        {
+          "atlas": "parka",
+          "file": "explorer-lod1-parka.glb",
+          "triangles": 66040,
+          "bytes": 3597584
+        }
+      ],
+      "triangles": 333025,
+      "bytes": 23743532
+    },
+    {
+      "tier": 2,
+      "surfaces": [
+        {
+          "atlas": "detail",
+          "file": "explorer-lod2-detail.glb",
+          "triangles": 2240,
+          "bytes": 658764
+        },
+        {
+          "atlas": "eyes",
+          "file": "explorer-lod2-eyes.glb",
+          "triangles": 8160,
+          "bytes": 830736
+        },
+        {
+          "atlas": "gear",
+          "file": "explorer-lod2-gear.glb",
+          "triangles": 440578,
+          "bytes": 27783476
+        },
+        {
+          "atlas": "hair",
+          "file": "explorer-lod2-hair.glb",
+          "triangles": 11920,
+          "bytes": 1098332
+        },
+        {
+          "atlas": "head",
+          "file": "explorer-lod2-head.glb",
+          "triangles": 538368,
+          "bytes": 25008636
+        },
+        {
+          "atlas": "parka",
+          "file": "explorer-lod2-parka.glb",
+          "triangles": 264160,
+          "bytes": 12356076
+        }
+      ],
+      "triangles": 1265426,
+      "bytes": 67736020
+    }
+  ]
+}

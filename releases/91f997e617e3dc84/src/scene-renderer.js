@@ -51,7 +51,7 @@ export class ThreeGameRenderer {
     this.renderer.info.autoReset = false;
     this.budget = new FrameBudget(Math.min(window.devicePixelRatio || 1,this.profile.maxPixelRatio));
     this.measurement = new FrameMeasurement();
-    this.measurement.revision='adaptive-keyart-v20';
+    this.measurement.revision='adaptive-natural-v22';
     this.geometryBudget=new GeometryBudget(geometryTierLimit({mobile,memory:navigator.deviceMemory}));
     this.motionDiagnostics = new MotionDiagnostics();
     let mode = 'auto';

@@ -1,0 +1,53 @@
+Frostline Rescue production assets / revision natural-v22
+
+CHARACTER
+Rain Rig (CC) Blender Foundation | studio.blender.org
+Source: https://studio.blender.org/characters/rain/v3/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+The explorer and collector body and rig are adaptations of Rain v3.3. Changes include winter
+clothing, gloves, gaiters, webbing, hip carrier, UV atlases, PBR baking, a reduced
+43-bone deformation rig, game-unit conversion, and new locomotion/attack clips.
+This is not an endorsement by Blender Foundation or Blender Studio.
+Rain-derived character mesh and texture adaptations retain CC BY 4.0 attribution.
+The v22 portrait replaces the Rain-derived stylized face and hair with a fitted
+MakeHuman hm08 head, anatomical eyes, eyebrow004 and eyelashes03 (CC0 1.0).
+MakeHuman Community: https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html
+The head uses CC0 shape targets from the pinned MakeHuman source revision
+recorded in portrait-sources.json. Facial proportions and material grading
+are adapted for the explorer. No endorsement by MakeHuman is implied.
+
+HAIR
+Elvaerwyn / elvs_inverted_curly_bob / CC-BY (version unspecified by source)
+https://static.makehumancommunity.org/assets/assetpacks/hair02.html
+Changes: anatomical refitting, face-framing cut, wave shaping, chestnut
+color grading, atlas baking and game-unit conversion.
+Original author and license notices are preserved in the private vendor source.
+
+EYELID MOTION
+Mika Suominen / faceunits01 eyeBlinkLeft and eyeBlinkRight / CC0
+https://static.makehumancommunity.org/assets/assetpacks/faceunits01.html
+Changes: fitted head/lash deltas, subdivision transfer, native GPU morphs.
+
+The skin color, derivative chestnut hair albedo and ivory shearling material were generated with OpenAI image
+generation for this project; the skin uses the existing MakeHuman UV layout.
+They are UV-mapped and baked onto the actual 3D surfaces, not portrait overlays.
+The hood and fur are original adaptations. This does not establish facial
+identity with the generated key art. Optional geometry-only LODs share the
+same portrait UVs and textures.
+The game source code is not licensed by this asset credit.
+
+PROPS
+wooden_axe_02, wooden_axe_03 / Ulan Cabanilla / Poly Haven
+wooden_military_crate / Prabhjinder Singh / Poly Haven
+barrel_stove / MP / Poly Haven
+https://polyhaven.com/license
+License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+Changes: game-scale conversion, grip-axis orientation, cargo mesh LOD, preserved
+source PBR materials and UVs. The axe cover is an original fitted mesh using
+Poly Haven brown_leather CC0 textures, credited in ../pbr/sources.json.
+
+Exact source URLs, authors and SHA-256 checksums: sources.json and portrait-sources.json.
+Editable adaptation projects are maintained in the private source repository.

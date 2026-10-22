@@ -1,4 +1,5 @@
 import { AnimationMixer, AnimationClip, VectorKeyframeTrack, QuaternionKeyframeTrack, Quaternion, Euler, LoopOnce } from './vendor/three.module.js';
+import {portraitBlink}from'./portrait-motion.js';
 
 const lowerBodyJoints = new Set(['leg-left', 'leg-right', 'shin-left', 'shin-right']);
 const isLowerBodyTrack = track => lowerBodyJoints.has(track.name.split('.')[0]);
@@ -25,6 +26,7 @@ export function beastAttackTime(motion) {
 export class ActorAnimation {
   constructor(root, clips, family) {
     this.mixer = new AnimationMixer(root); this.actions = new Map(); this.family = family; this.clock = 0;
+    this.portrait=[];root.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.blink!==undefined)this.portrait.push(node);});
     const actorClips = new Map(['idle','walk','attack'].map(mode => [mode, clips.get(`${family}-${mode}`)]));
     if (family === 'human') {
       const walk = actorClips.get('walk'), attack = actorClips.get('attack');
@@ -52,6 +54,7 @@ export class ActorAnimation {
   }
   locomotion(amount, dt) {
     this.clock += dt;
+    for(const mesh of this.portrait)mesh.morphTargetInfluences[mesh.morphTargetDictionary.blink]=portraitBlink(this.clock);
     const mode = amount > .1 ? 'walk' : 'idle', action = this.actions.get(mode);
     this.sample(mode, this.clock % action.getClip().duration);
   }

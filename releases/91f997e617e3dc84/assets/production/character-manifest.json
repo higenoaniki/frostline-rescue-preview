@@ -1,10 +1,18 @@
 {
-  "revision": "keyart-v20",
-  "source": "Rain-derived body and rig; MakeHuman CC0 anatomical head; original key-art expedition tailoring and loose chestnut hair",
-  "license": "CC-BY-4.0 and CC0-1.0",
+  "revision": "natural-v22",
+  "source": "MakeHuman anatomical portrait with fitted optical eyes, alpha-card bob, brows and lashes; Rain-derived expedition body and rig",
+  "license": "CC-BY-4.0, CC0-1.0 and CC-BY (hair; version unspecified by source)",
   "atlasSize": 2048,
-  "triangles": 182104,
-  "sourceTriangles": 364211,
+  "surfaces": [
+    "head",
+    "eyes",
+    "hair",
+    "detail",
+    "gear",
+    "parka"
+  ],
+  "triangles": 177671,
+  "sourceTriangles": 333025,
   "bones": [
     "root-bone",
     "torso",
@@ -50,8 +58,10 @@
     "finger-left-thumb-2",
     "finger-left-thumb-3"
   ],
-  "skinnedMeshes": 3,
+  "skinnedMeshes": 6,
   "materialWorkflow": "authored-pbr",
   "reference": "assets/title/key-art-v15.jpg",
-  "matchingStatus": "reference-adapted, not identity-verified"
+  "matchingStatus": "reference-adapted, not identity-verified",
+  "portraitMotion": "fitted native eyelid/lash GPU morph; no image overlay",
+  "portraitSources": "portrait-sources.json"
 }

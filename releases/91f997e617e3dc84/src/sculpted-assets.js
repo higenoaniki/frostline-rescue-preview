@@ -40,7 +40,7 @@ export function loadSculptedAssets() {
       catalog.set(key, root);
     }
     for(const [key,root]of production.props)catalog.set(key,root);
-    document.querySelector('#game')?.setAttribute('data-art', 'keyart-v20');
+    document.querySelector('#game')?.setAttribute('data-art', 'natural-v22');
   });
   return loading;
 }

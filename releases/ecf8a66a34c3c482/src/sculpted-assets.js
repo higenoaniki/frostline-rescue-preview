@@ -2,19 +2,24 @@ import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { BufferAttribute } from './vendor/three.module.js';
 import { loadPbrMaterials, partitionSurfaceMesh, actorMaterials } from './pbr-materials.js';
 import { ActorAnimation, createActorClips } from './actor-animation.js';
+import {loadProductionAssets,productionPerson} from './production-assets.js';
 
 const catalog = new Map();
 let loading;
 let clips;
+let production;
 export function loadSculptedAssets() {
   loading ??= Promise.all([
     new GLTFLoader().loadAsync(new URL('../assets/sculpted/frostline-art.glb', import.meta.url).href),
     fetch(new URL('../assets/sculpted/motions-v12.json', import.meta.url)).then(response => { if (!response.ok) throw new Error('Animation library failed to load'); return response.json(); }),
-    loadPbrMaterials()
-  ]).then(([{ scene }, motions]) => {
+    loadPbrMaterials(),
+    loadProductionAssets()
+  ]).then(([{ scene }, motions,,authored]) => {
+    production=authored;
     clips = createActorClips(motions);
     for (const root of scene.children) {
       const key = (root.userData.asset || root.name).replace(/\.\d+$/, '');
+      if(['explorer','worker-character'].includes(key)||production.props.has(key))continue;
       const replacements=[];
       root.traverse(node => {
         if (node.userData.joint) node.name = node.userData.joint;
@@ -34,7 +39,8 @@ export function loadSculptedAssets() {
       for(const node of replacements){const parent=node.parent;parent.add(partitionSurfaceMesh(node));parent.remove(node);}
       catalog.set(key, root);
     }
-    document.querySelector('#game')?.setAttribute('data-art', 'pbr-v18');
+    for(const [key,root]of production.props)catalog.set(key,root);
+    document.querySelector('#game')?.setAttribute('data-art', 'keyart-v20');
   });
   return loading;
 }
@@ -48,7 +54,7 @@ export function sculptedModel(name) {
 }
 
 export function sculptedPerson(worker = false) {
-  const g = sculptedModel(worker ? 'worker-character' : 'explorer');
+  const g = productionPerson(production.character,worker,production.props.get('axe-cover'));
   const joint = name => g.getObjectByName(name);
   const material = actorMaterials(g,0xff9064);
   g.userData = { ...g.userData, torso: joint('torso'), head: joint('head'), leftLeg: joint('leg-left'), rightLeg: joint('leg-right'), leftArm: joint('arm-left'), rightArm: joint('arm-right'), grip: joint('weapon-grip'), stack: joint('stack'), armor: joint('armor'), facing: 0, walk: 0, flash: material };
@@ -57,7 +63,7 @@ export function sculptedPerson(worker = false) {
   g.userData.holster = joint('weapon-holster');
   g.userData.sheath = joint('blade-sheath');
   g.userData.leftShin = joint('shin-left');
-  g.userData.animation = new ActorAnimation(g, clips, 'human');
+  g.userData.animation = new ActorAnimation(g, production.clips, 'human');
   return g;
 }
 

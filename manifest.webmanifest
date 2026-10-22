@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./releases/d5ba5fc21c42cfd1/assets/icon.svg",
+      "src": "./releases/ecf8a66a34c3c482/assets/icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

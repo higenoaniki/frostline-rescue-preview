@@ -27,14 +27,17 @@ import { FrameBudget, FrameMeasurement } from './frame-budget.js';
 import { MotionDiagnostics } from './motion-diagnostics.js';
 import { buildAlpineLandscape, iceOutcrop } from './alpine-landscape.js';
 import { applyPhysicalLighting } from './physical-lighting.js';
+import {GeometryBudget,geometryTierLimit} from './geometry-budget.js';
+import {loadGeometryDetail,releaseGeometryDetailsAbove} from './production-assets.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
 
 export class ThreeGameRenderer {
   constructor(canvas) {
+    const mobile=window.Capacitor?.isNativePlatform?.()===true||navigator.userAgentData?.mobile===true||/Android|iPhone|iPad/i.test(navigator.userAgent)||navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
     this.profile = renderProfile({
-      mobile: window.Capacitor?.isNativePlatform?.() === true || navigator.userAgentData?.mobile === true || /Android|iPhone|iPad/i.test(navigator.userAgent) || navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1,
+      mobile,
       lowMemory: navigator.deviceMemory > 0 && navigator.deviceMemory <= 4,
       reduced: new URLSearchParams(location.search).get('quality') === 'low'
     });
@@ -48,6 +51,8 @@ export class ThreeGameRenderer {
     this.renderer.info.autoReset = false;
     this.budget = new FrameBudget(Math.min(window.devicePixelRatio || 1,this.profile.maxPixelRatio));
     this.measurement = new FrameMeasurement();
+    this.measurement.revision='adaptive-keyart-v20';
+    this.geometryBudget=new GeometryBudget(geometryTierLimit({mobile,memory:navigator.deviceMemory}));
     this.motionDiagnostics = new MotionDiagnostics();
     let mode = 'auto';
     try { mode = localStorage.getItem('frostline-display-v1') || 'auto'; } catch {}
@@ -329,6 +334,19 @@ export class ThreeGameRenderer {
     this.budget.setMode(mode);
     try { localStorage.setItem('frostline-display-v1',mode); } catch {}
     this.applyDisplayBudget();
+    if(mode==='low')this.setGeometryDetail(0);
+  }
+
+  async setGeometryDetail(tier){
+    const request=(this.geometryRequest??0)+1;this.geometryRequest=request;
+    try{
+      const parts=tier===0?null:await loadGeometryDetail(tier);
+      if(request!==this.geometryRequest)return;
+      this.player.setGeometryDetail(tier,parts);this.geometryBudget.settle(tier);
+      if(tier===0&&this.budget.mode==='low'||this.geometryBudget.ceiling<2)releaseGeometryDetailsAbove(Math.min(tier,this.geometryBudget.ceiling));
+    }catch{
+      if(request===this.geometryRequest)this.geometryBudget.fail();
+    }
   }
 
   applyDisplayBudget() {
@@ -338,7 +356,7 @@ export class ThreeGameRenderer {
 
   renderInfo() {
     const size=this.renderer.getDrawingBufferSize(new THREE.Vector2());
-    return {calls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,width:size.x,height:size.y,ratio:this.renderer.getPixelRatio(),mode:this.budget.mode,shadows:this.renderer.shadowMap.enabled};
+    return {calls:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,width:size.x,height:size.y,ratio:this.renderer.getPixelRatio(),mode:this.budget.mode,shadows:this.renderer.shadowMap.enabled,geometryTier:this.player.userData.geometryTier,geometryPending:this.geometryBudget.pending,geometryCeiling:this.geometryBudget.ceiling};
   }
 
   motionReport() {
@@ -355,6 +373,8 @@ export class ThreeGameRenderer {
     const frameMs=this.frameTime===undefined?0:time-this.frameTime;this.frameTime=time;
     const continuing=this.frameActive;this.frameActive=active;
     if (!active || !continuing) return;
+    const tier=this.geometryBudget.observe(frameMs,{allowIncrease:!this.budget.degraded,low:this.budget.mode==='low'});
+    if(tier!==null)this.setGeometryDetail(tier);
     if (this.budget.observe(frameMs)) this.applyDisplayBudget();
     this.measurement.record(frameMs,this.renderInfo());
   }

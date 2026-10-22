@@ -1,0 +1,56 @@
+{
+  "revision": "keyart-v20",
+  "tiers": [
+    {
+      "tier": 1,
+      "surfaces": [
+        {
+          "atlas": "gear",
+          "file": "explorer-lod1-gear.glb",
+          "triangles": 108955,
+          "bytes": 6273732
+        },
+        {
+          "atlas": "head",
+          "file": "explorer-lod1-head.glb",
+          "triangles": 189216,
+          "bytes": 9082308
+        },
+        {
+          "atlas": "parka",
+          "file": "explorer-lod1-parka.glb",
+          "triangles": 66040,
+          "bytes": 3431116
+        }
+      ],
+      "triangles": 364211,
+      "bytes": 18787156
+    },
+    {
+      "tier": 2,
+      "surfaces": [
+        {
+          "atlas": "gear",
+          "file": "explorer-lod2-gear.glb",
+          "triangles": 436106,
+          "bytes": 20564196
+        },
+        {
+          "atlas": "head",
+          "file": "explorer-lod2-head.glb",
+          "triangles": 757632,
+          "bytes": 31946300
+        },
+        {
+          "atlas": "parka",
+          "file": "explorer-lod2-parka.glb",
+          "triangles": 264160,
+          "bytes": 12057788
+        }
+      ],
+      "triangles": 1457898,
+      "bytes": 64568284
+    }
+  ],
+  "baseSha256": "8ad7ae5319f78142cdaf31a43560650ae9e3089997a17aefbb5d9cd1e7a5f4e9"
+}

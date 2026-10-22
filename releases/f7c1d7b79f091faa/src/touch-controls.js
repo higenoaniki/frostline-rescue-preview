@@ -1,4 +1,4 @@
-const UI_SELECTOR = 'button, input, select, textarea, a, [role="menu"], .modal, .title-screen, .top-hud, .quest-panel, .shipping-panel, .event-panel, .bottom-hud, #investmentPanel, #defensePanel';
+const UI_SELECTOR = 'button, input, select, textarea, a, dialog, [data-game-ui], [role="menu"], .modal, .title-screen, .top-hud, .quest-panel, .shipping-panel, .event-panel, .bottom-hud, #investmentPanel, #defensePanel';
 
 export function bindFloatingStick(surface, input, joystick, stick, canMove) {
   let origin = null, capture = null;
@@ -20,7 +20,8 @@ export function bindFloatingStick(surface, input, joystick, stick, canMove) {
     event.preventDefault();
     const dx = event.clientX - origin.x, dy = event.clientY - origin.y, distance = Math.hypot(dx, dy);
     const scale = Math.min(1, 42 / (distance || 1));
-    input.joyX = distance < 6 ? 0 : dx * scale / 42; input.joyY = distance < 6 ? 0 : dy * scale / 42;
+    const strength=distance<6?0:Math.min(1,(distance-4)/22);
+    input.joyX = dx/(distance||1)*strength; input.joyY = dy/(distance||1)*strength;
     stick.style.transform = `translate(${dx * scale}px, ${dy * scale}px)`;
   });
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) surface.addEventListener(type, (event) => { if (event.pointerId === input.pointerId) reset(); });

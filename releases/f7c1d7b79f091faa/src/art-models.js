@@ -12,6 +12,7 @@ export class ArtModels {
     const loader = new THREE.TextureLoader();
     this.textures = {};
     for (const [name, file] of Object.entries({ wood: 'wood', cloth: 'canvas', steel: 'steel', snow: 'snow' })) {
+      if(profile.toon)continue;
       const map = loader.load(new URL(`../assets/generated/${file}-surface-v2.png`, import.meta.url).href);
       map.colorSpace = THREE.SRGBColorSpace;
       map.wrapS = map.wrapT = THREE.RepeatWrapping;
@@ -47,6 +48,10 @@ export class ArtModels {
     this.m.steel.metalness = .72; this.m.steel.roughness = .3;
     this.m.glass.metalness = .3; this.m.glass.roughness = .12;
     this.m.furLight.color.set(0xe9ede4); this.m.floor.color.set(0xa3b3b3);
+    if(profile.toon){
+      for(const [name,material]of Object.entries(this.m))this.m[name]=new THREE.MeshToonMaterial({color:material.color,vertexColors:material.vertexColors,emissive:material.emissive,emissiveIntensity:material.emissiveIntensity});
+      this.toon=true;return;
+    }
     this.m.snow=terrainPbrMaterial(4);
     this.m.snow.onBeforeCompile = shader => {
       shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>

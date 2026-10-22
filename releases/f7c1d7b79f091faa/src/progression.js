@@ -1,4 +1,4 @@
-export const PLAYER_SPEED = 430;
+export const PLAYER_SPEED = 580;
 export const SALE_PRICE = 4;
 export const STORAGE_LIMIT = 72;
 export const WEAPON_DAMAGE = [0, 2, 3, 6];

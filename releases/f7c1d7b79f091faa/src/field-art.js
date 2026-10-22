@@ -18,8 +18,9 @@ export function buildFieldSurface(a) {
     color.multiplyScalar(.96 + Math.sin(x * .018 + Math.cos(y * .016)) * .04); color.toArray(colors, i * 3);
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geometry.computeVertexNormals();
-  const material = a.m.snow.clone(); material.vertexColors = true; material.onBeforeCompile = a.m.snow.onBeforeCompile;
+  const material = a.m.snow.clone(); material.vertexColors = !a.toon; material.onBeforeCompile = a.m.snow.onBeforeCompile;
   const ground = new THREE.Mesh(geometry, material); ground.receiveShadow = true; group.add(ground);
+  if(a.toon)return group;
   for (let i = 0; i < 155; i++) {
     const x = 180 + ((i * 431) % 1630), y = 200 + ((i * 577) % (SAFE.y - 400)), height = fieldHeight(x, y);
     if (i % 3) {
@@ -35,6 +36,7 @@ export function buildFieldSurface(a) {
 }
 
 export function buildCampSurface(a) {
+  if(a.toon){const g=new THREE.Group();a.box(g,SAFE.w,12,SAFE.h,new THREE.MeshToonMaterial({color:0xd9b084}),0,26,toZ(SAFE.y+SAFE.h/2),2);return g;}
   const group = new THREE.Group(), geometry = new THREE.PlaneGeometry(SAFE.w, SAFE.h, 40, 58);
   geometry.rotateX(-Math.PI / 2); geometry.translate(0, 32, toZ(SAFE.y + SAFE.h / 2));
   const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3);

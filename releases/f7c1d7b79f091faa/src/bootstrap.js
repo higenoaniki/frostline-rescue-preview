@@ -41,7 +41,8 @@
     message.textContent = '読み込みに時間がかかっています。通信状態を確認してください。';
     retry.hidden = false;
   }, 20000);
-  import('./main.js').catch(error => {
+  const gameModule = new URLSearchParams(location.search).get('stage') === 'snowfront' ? './snowfront-main.js' : './main.js';
+  import(gameModule).catch(error => {
     const gpu = /webgl|context|gpu/i.test(error.message);
     failure('ゲームの起動に失敗しました', gpu
       ? '3D描画を開始できませんでした。SafariまたはChromeを更新し、ほかのタブを閉じて再読み込みしてください。'

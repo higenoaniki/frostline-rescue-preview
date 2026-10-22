@@ -16,7 +16,8 @@ import Navigation from './vendor/lucide/icons/navigation.js';
 import House from './vendor/lucide/icons/house.js';
 import Settings from './vendor/lucide/icons/settings.js';
 import Close from './vendor/lucide/icons/x.js';
-const nodes = { settings: Settings, close: Close, home: House, flag: Flag, pause: Pause, play: Play, coins: Coins, shield: Shield, package: Package, beef: Beef, layers: Layers, snow: Snowflake, trophy: Trophy, volume: Volume, muted: Muted, chevron: Chevron, navigation: Navigation };
+import BookOpen from './vendor/lucide/icons/book-open.js';
+const nodes = { book: BookOpen, settings: Settings, close: Close, home: House, flag: Flag, pause: Pause, play: Play, coins: Coins, shield: Shield, package: Package, beef: Beef, layers: Layers, snow: Snowflake, trophy: Trophy, volume: Volume, muted: Muted, chevron: Chevron, navigation: Navigation };
 export function icon(name, size = 20) {
   const node = createElement(nodes[name]); node.setAttribute('width', size); node.setAttribute('height', size); node.setAttribute('aria-hidden', 'true'); return node;
 }

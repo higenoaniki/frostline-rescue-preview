@@ -38,7 +38,7 @@ const outro=outcome.querySelector('.journey-dialog-body'),ending=document.create
 next.onclick=async()=>{next.disabled=true;try{await runStageBoundary({from:stage.id,to:stage.next,reason:'clear',storage:location.pathname.startsWith('/review/')?null:localStorage,save,navigate:id=>location.assign(id?stageUrl(location.href,id):menuUrl(location.href))});}catch(e){ui.notify(e.message);next.disabled=false;}};
 stay.onclick=()=>{outcome.close();state.status='playing';paused=false;stop();save();};
 const intro=makeDialog(stage.title);intro.querySelector('.journey-dialog-body').innerHTML='<small class="journey-kicker"></small><p></p><button type="button" class="journey-primary">この場所で始める</button>';intro.querySelector('small').textContent=`第${stage.chapter}章 · STAGE ${stage.local}/5 · ${chapter.outfit}`;intro.querySelector('p').textContent=stage.story;intro.querySelector('.journey-primary').onclick=()=>intro.close();intro.addEventListener('close',()=>{paused=false;stop();try{localStorage.setItem(stageSaveKey(stage.id)+'-seen','1');}catch{}});
-let seen=false;try{seen=localStorage.getItem(stageSaveKey(stage.id)+'-seen')==='1';}catch{}
+let seen=false;try{seen=localStorage.getItem(stageSaveKey(stage.id)+'-seen')==='1'||localStorage.getItem(`frostline-life-${stage.id}-v1-seen`)==='1';}catch{}
 if(!seen&&!location.pathname.startsWith('/review/')){paused=true;intro.showModal();}
 function context(){
   const p=state.player,near=(target,r=1.7)=>Math.hypot(p.x-target.x,p.y-target.y)<r;

@@ -32,7 +32,8 @@ export function inheritLife(s,previous,cargo=false){
   return s;
 }
 export function loadLifeStage(storage,stage,{restart=false}={}){
-  let own=null,previous=null;try{if(!restart)own=restoreLife(storage.getItem(`frostline-life-${stage}-v1`),stage);const stages=Object.keys(LIFE_STAGES),index=stages.indexOf(stage);for(let i=index-1;i>=0&&LIFE_STAGES[stages[i]].theme===LIFE_STAGES[stage].theme;i--){const p=restoreLife(storage.getItem(`frostline-life-${stages[i]}-v1`),stages[i]);if(p?.completed){previous=p;break;}}}catch{}
+  const read=id=>restoreLife(storage.getItem(`frostline-life-${id}-v2`),id)??restoreLife(storage.getItem(`frostline-life-${id}-v1`),id);
+  let own=null,previous=null;try{if(!restart)own=read(stage);const stages=Object.keys(LIFE_STAGES),index=stages.indexOf(stage);for(let i=index-1;i>=0&&LIFE_STAGES[stages[i]].theme===LIFE_STAGES[stage].theme;i--){const p=read(stages[i]);if(p?.completed){previous=p;break;}}}catch{}
   return own?inheritLife(own,previous):newLife(stage,previous);
 }
 export function startLifeInvestment(s,id){if(!s.built[id]&&LIFE_STAGES[s.stage].plots[id]&&near(s.player,LIFE_PADS[id],1.6)&&s.player.cash>0){s.investmentActive=id;return true;}return false;}

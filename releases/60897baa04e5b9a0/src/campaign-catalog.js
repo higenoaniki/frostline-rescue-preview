@@ -38,8 +38,8 @@ export function stageUnlocked(storage,id){
   const done=completedStages(storage),highest=Math.max(-1,...done.map(id=>stageFor(id).index));
   return stage.index<=highest+1||hasStageSave(storage,id);
 }
-export function stageSaveKey(id){return id==='camp'?'frostline-camp-v1':id==='snowfront'?'frostline-snowfront-v1':stageFor(id).engine==='life'?`frostline-life-${id}-v1`:`frostline-story-${id}-v1`;}
-export function hasStageSave(storage,id){try{return !!storage.getItem(stageSaveKey(id));}catch{return false;}}
+export function stageSaveKey(id){return id==='camp'?'frostline-camp-v1':id==='snowfront'?'frostline-snowfront-v1':stageFor(id).engine==='life'?`frostline-life-${id}-v2`:`frostline-story-${id}-v1`;}
+export function hasStageSave(storage,id){try{return !!(storage.getItem(stageSaveKey(id))||stageFor(id).engine==='life'&&storage.getItem(`frostline-life-${id}-v1`));}catch{return false;}}
 export function suggestedStage(storage){
   const done=completedStages(storage);return STAGES.find(s=>!done.includes(s.id)&&stageUnlocked(storage,s.id))??STAGES.at(-1);
 }

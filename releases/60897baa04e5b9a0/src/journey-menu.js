@@ -16,7 +16,7 @@ let resume;try{const id=localStorage.getItem('frostline-last-stage-v1');if(id&&!
 if(!resume){const high=Math.max(-1,...completed.map(id=>stageFor(id).index));resume=STAGES[high+1]??suggestedStage(localStorage);}
 $('journeyContinue').append(icon('play',22),document.createTextNode(`${resume.index===0&&!hasStageSave(localStorage,'camp')?'旅を始める':'冒険を続ける'} · ${resume.chapter}-${resume.local}`));$('journeyContinue').onclick=()=>{audio.unlock();location.assign(stageUrl(location.href,resume.id));};
 buttonIcon($('journeyBack'),'home','タイトルへ');$('journeyBack').onclick=()=>showTitle();$('journeySelect').onclick=()=>{audio.unlock();showMenu(resume.journey);};
-function showTitle(){menu.hidden=true;title.hidden=false;image.src=chapterArt('winter');history.replaceState(null,'',menuUrl(location.href,'title'));}
+function showTitle(){menu.hidden=true;title.hidden=false;image.src=chapterArt('winter');image.alt='雪原から始まるユイとアオの旅';history.replaceState(null,'',menuUrl(location.href,'title'));}
 function showMenu(chapter=selected){selected=chapter;title.hidden=true;menu.hidden=false;history.replaceState(null,'',menuUrl(location.href));render();}
 function render(){
   const chapter=JOURNEYS.find(c=>c.id===selected);root.dataset.theme=chapter.id;$('journeyTotal').textContent=`${completed.length}/15 CLEAR`;$('journeyChapterNumber').textContent=`CHAPTER ${String(chapter.number).padStart(2,'0')}`;$('journeyChapterTitle').textContent=chapter.title;$('journeyChapterStory').textContent=chapter.subtitle;

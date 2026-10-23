@@ -1,4 +1,5 @@
 import { AUDIO_CUES, AUDIO_VOICE_LIMIT, MUSIC_URL, sampleUrl, audioVolume, readAudioSettings } from './audio-catalog.js';
+import {MusicLoop} from './music-loop.js';
 export class GameAudio {
   constructor(environment = {}) {
     try { this.storage = environment.storage ?? globalThis.localStorage; } catch {}
@@ -23,16 +24,12 @@ export class GameAudio {
         this.master.gain.value = 0.85;
         this.master.connect(limiter); limiter.connect(c.destination);
         this.effectsBus.connect(this.master); this.musicBus.connect(this.master);
-        const mediaFactory = this.environment.mediaFactory || (() => new Audio());
-        this.musicElement = mediaFactory();
-        this.musicElement.loop = true; this.musicElement.preload = 'none'; this.musicElement.src = this.environment.musicUrl || MUSIC_URL;
-        this.musicElement.addEventListener('error', () => {});
-        this.musicSource = c.createMediaElementSource(this.musicElement); this.musicSource.connect(this.musicBus);
+        this.musicLoop = new MusicLoop(c,this.musicBus,this.environment.musicUrl||MUSIC_URL,this.environment.fetcher||globalThis.fetch);
         this.musicBus.gain.value = 0; this.effectsBus.gain.value = this.effects;
       }
       this.unlocked = true;
       // Start in the gesture itself, before any asynchronous sample download.
-      this.context.resume().catch(() => {}); this.syncMusic();
+      this.context.resume().then(()=>this.syncMusic()).catch(() => {}); this.syncMusic();
       for (const cue of Object.values(this.cues)) for (const file of cue.files) this.load(file);
     } catch { /* Unsupported/blocked audio must not stop the game. */ }
   }
@@ -50,21 +47,20 @@ export class GameAudio {
   }
   syncMusic() {
     const c = this.context;
-    if (!c || !this.musicElement) return;
+    if (!c || !this.musicLoop) return;
     const stopped = this.muted || this.hidden || this.paused;
     const target = stopped ? 0 : this.music * (c.currentTime < this.duckUntil ? 0.25 : 1);
     this.musicBus.gain.setTargetAtTime(target, c.currentTime, 0.35);
     this.effectsBus.gain.setTargetAtTime(this.muted || this.hidden ? 0 : this.effects, c.currentTime, 0.03);
-    if (stopped || this.music === 0) this.musicElement.pause();
-    else if (this.unlocked && this.musicElement.paused) this.musicElement.play().catch(() => {});
+    this.musicLoop.setPlaying(!stopped&&this.music>0&&this.unlocked);
   }
   setActivity({ paused = false, hidden = false } = {}) {
     const changed = paused !== this.paused || hidden !== this.hidden;
     this.paused = paused; this.hidden = hidden;
     if (changed) {
       this.position = null; this.footDistance = 0;
-      if (hidden) { this.stopVoices(); this.musicElement?.pause(); this.context?.suspend().catch(() => {}); }
-      else if (this.unlocked && !this.muted && this.context?.state === 'suspended') this.context.resume().catch(() => {});
+      if (hidden) { this.stopVoices(); this.musicLoop?.setPlaying(false); this.context?.suspend().catch(() => {}); }
+      else if (this.unlocked && !this.muted && this.context && !['running','closed'].includes(this.context.state)) this.context.resume().then(()=>this.syncMusic()).catch(() => {});
       if (paused && !hidden) for (const voice of [...this.voices]) {
         if (voice.priority < 3) { try { voice.source.stop(); } catch {} voice.cleanup(); }
       }

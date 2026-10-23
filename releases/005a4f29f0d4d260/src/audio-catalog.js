@@ -1,6 +1,6 @@
 export const AUDIO_DEFAULTS = Object.freeze({ music: 0.55, effects: 0.8 });
 export const AUDIO_VOICE_LIMIT = 16;
-export const MUSIC_URL = new URL('../assets/audio/winter-wind.mp3', import.meta.url).href;
+export const MUSIC_URL = new URL('../assets/audio/winter-drive-v3.wav', import.meta.url).href;
 const cue = (files, gain, cooldown, priority = 1) => ({ files, gain, cooldown, priority });
 export const AUDIO_CUES = Object.freeze({
   stepSnow: cue(['snow-1', 'snow-2', 'snow-3'], 0.22, 0.24, 0), stepStone: cue(['stone-1', 'stone-2'], 0.18, 0.24, 0),

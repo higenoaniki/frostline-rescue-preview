@@ -1,0 +1,9 @@
+{
+  "original": true,
+  "source": "scripts/compose-stage-clear.mjs",
+  "description": "Ascending C-major mallet cadence with resolved warm chord and full release; no borrowed samples",
+  "rate": 32000,
+  "duration": 2.4,
+  "peak": 0.78,
+  "rms": 0.10724050156198078
+}

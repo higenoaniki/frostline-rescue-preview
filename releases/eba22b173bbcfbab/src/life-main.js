@@ -11,6 +11,8 @@ import {buttonIcon} from './icons.js';
 import {advanceSimulation} from './simulation-clock.js';
 import {screenToWorldInput} from './player-movement.js';
 import {lifeAudio} from './life-audio.js';
+import {investmentCommand} from './investment-command.js';
+import {readDisplayMode,saveDisplayMode} from './display-settings.js';
 
 const stage=stageFor(new URLSearchParams(location.search).get('stage')),config=LIFE_STAGES[stage.id],chapter=journeyFor(stage.journey),canvas=document.querySelector('#game'),shell=document.querySelector('.shell');
 document.documentElement.classList.add('life-mode');
@@ -18,7 +20,7 @@ const renderer=new LifeRenderer(canvas,stage.id),audio=new GameAudio(lifeAudio(c
 let state;try{state=loadLifeStage(localStorage,stage.id);}catch{}state??=newLife(stage.id);
 let paused=false,hidden=document.hidden,last=0,saveTimer=0,outcomeShown=false;
 const input={keys:new Set(),pointerId:null,joyX:0,joyY:0},stick=document.createElement('div');stick.className='joystick';stick.setAttribute('aria-hidden','true');const thumb=document.createElement('span');stick.append(thumb);shell.append(stick);
-const resetTouch=bindFloatingStick(shell,input,stick,thumb,()=>!paused&&!hidden&&state.status==='playing');const stop=()=>{resetTouch();input.keys.clear();};
+const resetTouch=bindFloatingStick(shell,input,stick,thumb,()=>!paused&&!hidden&&state.status==='playing');const stop=()=>{resetTouch();input.keys.clear();state.investmentActive=null;};
 function save(){if(location.pathname.startsWith('/review/'))return true;try{localStorage.setItem(stageSaveKey(stage.id),saveLife(state));localStorage.setItem('frostline-last-stage-v1',stage.id);return true;}catch{return false;}}
 const makeDialog=(title)=>{const d=document.createElement('dialog');d.className='journey-dialog';d.dataset.gameUi='';d.setAttribute('aria-label',title);d.innerHTML='<header><h2></h2><button type="button"></button></header><div class="journey-dialog-body"></div>';d.querySelector('h2').textContent=title;buttonIcon(d.querySelector('button'),'close','閉じる');d.querySelector('button').onclick=()=>d.close();document.body.append(d);return d;};
 const options=makeDialog('設定');options.querySelector('.journey-dialog-body').innerHTML='<label class="life-setting">画質<select id="lifeQuality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label class="life-setting">BGM<input id="lifeMusic" type="range" min="0" max="100" step="5"></label><label class="life-setting">効果音<input id="lifeEffects" type="range" min="0" max="100" step="5"></label>';
@@ -31,7 +33,7 @@ function openJournal(){const body=journal.querySelector('.journey-dialog-body');
 function openSales(){const body=sales.querySelector('.journey-dialog-body');body.replaceChildren();for(const[type,price]of Object.entries(ITEM_PRICE)){if(!config.resources.includes(type)&&!Object.keys(state.machines).some(id=>RECIPES[type]?.facility===id))continue;const b=document.createElement('button');b.type='button';b.className='journey-command';b.textContent=`${state.saleType===type?'✓ ':''}${LIFE_ITEMS[type]} · ${price} / 個 · 所持 ${state.player.bag[type]}`;b.onclick=()=>{state.saleType=type;state.autoSale=false;sales.close();};body.append(b);}const note=document.createElement('p');note.className='journey-policy';note.textContent='ここで選んだ品物だけを市場へ納入します。次の加工に使う素材は、そのまま持っておけます。';body.append(note);openSheet(sales);}
 function restart(){try{state=loadLifeStage(localStorage,stage.id,{restart:true});}catch{state=newLife(stage.id);}renderer.reset();outcomeShown=false;outcome.close();paused=false;stop();save();}
 const ui=new CampaignHUD({stage:stage.id,root:shell,isPaused:()=>paused,pause:v=>{paused=v;},stop,save,restart,travel:()=>travelButton.click(),settings:()=>openSheet(options),journal:openJournal});
-const quality=options.querySelector('#lifeQuality');try{quality.value=localStorage.getItem('frostline-snowfront-quality')||'auto';}catch{}if(new URLSearchParams(location.search).get('quality')==='low')quality.value='low';renderer.setQuality(quality.value);quality.onchange=()=>{renderer.setQuality(quality.value);try{localStorage.setItem('frostline-snowfront-quality',quality.value);}catch{}};
+const quality=options.querySelector('#lifeQuality');renderer.setQuality(readDisplayMode());quality.value=renderer.quality;quality.onchange=()=>{renderer.setQuality(quality.value);quality.value=renderer.quality;saveDisplayMode(quality.value);};
 for(const[id,bus]of [['lifeMusic','music'],['lifeEffects','effects']]){const input=options.querySelector('#'+id);input.value=audio[bus]*100;input.oninput=()=>audio.setVolume(bus,Number(input.value)/100);}
 const outcome=makeDialog('ステージクリア');outcome.querySelector('header>button').hidden=true;outcome.addEventListener('cancel',e=>e.preventDefault());
 const outro=outcome.querySelector('.journey-dialog-body'),ending=document.createElement('p'),policy=document.createElement('p'),next=document.createElement('button'),stay=document.createElement('button');policy.className='journey-policy';policy.textContent=TRANSFER_POLICY;next.type=stay.type='button';next.className='journey-primary';stay.className='journey-secondary';stay.textContent='この場所で続ける';outro.append(ending,policy,next,stay);
@@ -43,7 +45,7 @@ if(!seen&&!location.pathname.startsWith('/review/')){paused=true;intro.showModal
 function context(){
   const p=state.player,near=(target,r=1.7)=>Math.hypot(p.x-target.x,p.y-target.y)<r;
   if(near(LIFE_PADS.market,2))return{title:`市場 · ${LIFE_ITEMS[state.saleType]}を納入`,text:`単価 ${ITEM_PRICE[state.saleType]} · 所持 ${p.bag[state.saleType]} · 他の素材は売りません`,actions:[{label:'納入品を選ぶ',icon:'package',action:openSales}]};
-  if(state.investment){const id=state.investment,cost=config.plots[id];return{title:`区画${plotLetter(config,id)}`,text:`投資 ${state.paid[id]||0}/${cost}${state.investmentActive?' · 投入中':p.cash?'':' · 現金が不足'}`,actions:[{label:state.investmentActive?'投入中':'投資開始',icon:'coins',disabled:!p.cash||!!state.investmentActive,action:()=>startLifeInvestment(state,id)}]};}
+  if(state.investment){const id=state.investment,cost=config.plots[id];return{title:`区画${plotLetter(config,id)}`,text:`現金 ${state.paid[id]||0} / ${cost} · ${state.investmentActive?'投入中':p.cash?'投資待機':'現金不足'}`,actions:[investmentCommand({active:state.investmentActive===id,available:!paused&&!p.moving&&p.cash>0&&state.blockedPad!==id,start:()=>startLifeInvestment(state,id),stop:()=>{state.investmentActive=null;}})]};}
   for(const[id,m]of Object.entries(state.machines))if(state.built[id]){
     const r=RECIPES[m.recipe];if(near(LIFE_PADS[id]))return{title:FACILITY_NAMES[id],text:Object.entries(r.input).map(([k,n])=>`${LIFE_ITEMS[k]} 在庫${m.input[k]||0}（${n}/回）`).join(' ＋ ')+` → ${LIFE_ITEMS[r.output]} · 完成${m.stock}`};
     if(near(lifeOutputPad(id),1.2))return{title:LIFE_ITEMS[r.output]+'の回収',text:`完成 ${m.stock}${lifeCargo(state)>=36?' · 荷物がいっぱい':''}`};

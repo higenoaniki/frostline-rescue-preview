@@ -7,6 +7,8 @@ import { UPGRADE_SPECS, upgradeCost, upgradeLevel, upgradeCap, facilityAvailable
 import { HUNTER_POSITION, BOSS_POSITION } from './combat.js';
 import { SERVICE_GATE } from './automation.js';
 import { renderProfile } from './render-profile.js';
+import {createGameRenderer} from './webgl-context.js';
+import {readDisplayMode,saveDisplayMode} from './display-settings.js';
 import { HatchetEquipment } from './axe-equipment.js';
 import { missionTarget } from './navigation.js';
 import { REFUGE_POSITION, FINAL_SUPPLIES } from './expedition.js';
@@ -42,9 +44,10 @@ export class ThreeGameRenderer {
     this.profile = renderProfile({
       mobile,
       lowMemory: navigator.deviceMemory > 0 && navigator.deviceMemory <= 4,
-      reduced: new URLSearchParams(location.search).get('quality') === 'low'
+      reduced: readDisplayMode()==='low'
     });
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.profile.antialias, powerPreference: 'high-performance' });
+    this.renderer = createGameRenderer(canvas,THREE.WebGLRenderer,{antialias:this.profile.antialias,reduced:readDisplayMode()==='low'});
+    if(this.renderer.userData.gpuFallback)this.profile=renderProfile({mobile,lowMemory:true,reduced:true});
     this.renderer.setClearColor(0xc8e6ed);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -57,9 +60,7 @@ export class ThreeGameRenderer {
     this.measurement.revision='adaptive-natural-v22';
     this.geometryBudget=new GeometryBudget(geometryTierLimit({mobile,memory:navigator.deviceMemory}));
     this.motionDiagnostics = new MotionDiagnostics();
-    let mode = 'auto';
-    try { mode = localStorage.getItem('frostline-display-v1') || 'auto'; } catch {}
-    if (new URLSearchParams(location.search).get('quality') === 'low') mode = 'low';
+    let mode = this.renderer.userData.gpuFallback?'low':readDisplayMode();
     this.budget.setMode(['auto','detail','low'].includes(mode) ? mode : 'auto');
     this.renderer.shadowMap.enabled = this.profile.shadows && this.budget.mode !== 'low';
     if(toon){
@@ -346,7 +347,7 @@ export class ThreeGameRenderer {
 
   setDisplayMode(mode) {
     this.budget.setMode(mode);
-    try { localStorage.setItem('frostline-display-v1',mode); } catch {}
+    saveDisplayMode(mode);
     this.applyDisplayBudget();
     if(mode==='low')this.setGeometryDetail(0);
   }

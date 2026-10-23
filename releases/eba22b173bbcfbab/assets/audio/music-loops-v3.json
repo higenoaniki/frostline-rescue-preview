@@ -1,0 +1,53 @@
+{
+  "original": true,
+  "source": "scripts/compose-game-music.mjs",
+  "format": "PCM16 mono; complete periodic arrangement with circular note releases and echoes; no intro/outro fade",
+  "tracks": [
+    {
+      "id": "winter-drive-v3",
+      "bpm": 132,
+      "key": 62,
+      "minor": true,
+      "lead": "reed",
+      "seed": 112,
+      "bars": 16,
+      "rate": 32000,
+      "frames": 930880,
+      "beatFrames": 14545,
+      "seconds": 29.09,
+      "seamDelta": 0.0046822652128725205,
+      "rms": 0.14,
+      "peak": 0.7059204880962706
+    },
+    {
+      "id": "harbor-drive-v3",
+      "bpm": 126,
+      "key": 60,
+      "lead": "flute",
+      "seed": 251,
+      "bars": 16,
+      "rate": 32000,
+      "frames": 975232,
+      "beatFrames": 15238,
+      "seconds": 30.476,
+      "seamDelta": 0.005660660836632324,
+      "rms": 0.14,
+      "peak": 0.7936662473505591
+    },
+    {
+      "id": "harvest-drive-v3",
+      "bpm": 116,
+      "key": 67,
+      "lead": "reed",
+      "seed": 389,
+      "bars": 16,
+      "rate": 32000,
+      "frames": 1059328,
+      "beatFrames": 16552,
+      "seconds": 33.104,
+      "seamDelta": 0.0014247328492628555,
+      "rms": 0.14,
+      "peak": 0.7572932140743112
+    }
+  ]
+}

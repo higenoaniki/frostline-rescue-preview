@@ -8,6 +8,8 @@ import {PADS,BUILD_COST,investmentCost,buildAvailable,isSafe}from'./snowfront-st
 import {campPerimeter} from './camp-perimeter.js';
 import {SnowLandscape,snowHeight} from './snow-landscape.js';
 import {hudOverlaps} from './world-labels.js';
+import {createGameRenderer} from './webgl-context.js';
+import {readDisplayMode} from './display-settings.js';
 
 const lerp=(a,b,t)=>a+(b-a)*t;
 const names={raw:'獲物を投入',roast:'焼き肉回収',sale:'販売・納品',cash:'売上回収',weapon:'斧を強化',east:'東区画',west:'西区画',smoker:'燻製工房',smoked:'荷箱回収',collector:'回収人',hunter:'自動狩り台',porter:'運搬係'};
@@ -15,9 +17,10 @@ const placement={grill:{x:-4,y:3},table:{x:-1.5,y:3.9},trade:{x:3.6,y:16},weapon
 export class SnowfrontRenderer{
   constructor(canvas){
     this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color(0xe7eef3);this.scene.fog=new T.Fog(0xe7eef3,48,105);
-    this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+    this.renderer=createGameRenderer(canvas,T.WebGLRenderer,{reduced:readDisplayMode()==='low'});
+    this.quality=this.renderer.userData.gpuFallback?'low':readDisplayMode();
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.NeutralToneMapping;this.renderer.toneMappingExposure=1;
-    this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;
+    this.renderer.shadowMap.enabled=this.quality!=='low';this.renderer.shadowMap.type=T.PCFShadowMap;
     this.effect=new OutlineEffect(this.renderer,{defaultThickness:.0017,defaultColor:[.25,.29,.32],defaultAlpha:.65});
     this.camera=new T.OrthographicCamera(-15,15,15,-15,.1,150);this.focus=new T.Vector3(0,0,6);this.visualTime=0;this.frameCount=0;
     this.scene.add(new T.HemisphereLight(0xf3f8ff,0xb5bec9,1.2));
@@ -64,7 +67,7 @@ export class SnowfrontRenderer{
     this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.quality==='low'?1.1:1.7));this.renderer.setSize(w,h,false);
     Object.assign(this.camera,{left:-span*aspect/2,right:span*aspect/2,top:span/2,bottom:-span/2});this.camera.updateProjectionMatrix();
   }
-  setQuality(mode){this.quality=['auto','detail','low'].includes(mode)?mode:'auto';const shadows=this.quality!=='low';this.effect.enabled=shadows;this.renderer.shadowMap.enabled=shadows;this.sun.castShadow=shadows;this.renderer.shadowMap.needsUpdate=true;this.scene.traverse(n=>{if(n.isMesh){for(const m of Array.isArray(n.material)?n.material:[n.material])m.needsUpdate=true;}});this.resize();}
+  setQuality(mode){this.quality=this.renderer.userData.gpuFallback?'low':['auto','detail','low'].includes(mode)?mode:'auto';const shadows=this.quality!=='low';this.effect.enabled=shadows;this.renderer.shadowMap.enabled=shadows;this.sun.castShadow=shadows;this.renderer.shadowMap.needsUpdate=true;this.scene.traverse(n=>{if(n.isMesh){for(const m of Array.isArray(n.material)?n.material:[n.material])m.needsUpdate=true;}});this.resize();}
   reset(){
     this.landscape.reset();
     for(const mesh of this.actors.values()){this.scene.remove(mesh);if(mesh.userData.health)this.scene.remove(mesh.userData.health);}this.actors.clear();

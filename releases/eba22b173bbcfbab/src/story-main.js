@@ -1,4 +1,6 @@
-import {newStory,tickStory,saveStory,restoreStory,retryStory,storyMissions,storyTarget,storyMaterialCapacity,storyProvisionCapacity,storySupplyRows,storyConvoyStatus,storyCost,STORY_NAMES,STORY_PADS,repairConvoy} from './story-state.js';
+import {newStory,tickStory,saveStory,restoreStory,retryStory,storyMissions,storyTarget,storyMaterialCapacity,storyProvisionCapacity,storySupplyRows,storyConvoyStatus,storyCost,STORY_NAMES,STORY_PADS,repairConvoy,startStoryInvestment,storyCanInvest} from './story-state.js';
+import {investmentCommand} from './investment-command.js';
+import {readDisplayMode,saveDisplayMode} from './display-settings.js';
 import {ChapterNarrative} from './chapter-narrative.js';
 import {StoryRenderer} from './story-renderer.js';
 import {chapterFor,storySaveKey,completeChapter} from './chapters.js';
@@ -26,15 +28,15 @@ root.innerHTML=`<header class="sf-hud" data-game-ui><div class="sf-heading"><spa
 <div class="joystick" id="stick" aria-hidden="true"><span id="thumb"></span></div>
 <dialog id="intro" class="sf-dialog story-intro" data-game-ui><img src="${new URL('../assets/title/key-art-story-v1.jpg',import.meta.url)}" alt="雪原の補給隊"><small>第1章 · STAGE ${Number(chapter.number)}/5</small><h2>${chapter.title}</h2><p>${chapter.story}</p><button id="start" type="button">遠征を始める</button></dialog>
 <dialog id="outcome" class="sf-dialog" data-game-ui><div id="outcomeIcon"></div><small id="kicker"></small><h2 id="outcomeTitle"></h2><p id="outcomeText"></p><button id="next" type="button"></button><button id="continue" class="sf-secondary" type="button"></button><button id="outcomeMap" class="sf-secondary" type="button">遠征マップ</button></dialog>
-<dialog id="options" class="sf-dialog sf-settings" data-game-ui><header><h2>設定</h2><button id="closeOptions" type="button"></button></header><label>画質<select id="quality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label>肉の自動回収<input id="pickupFood" type="checkbox"></label><label>BGM<input id="music" type="range" min="0" max="100" step="5"></label><label>効果音<input id="effects" type="range" min="0" max="100" step="5"></label><button id="restart" class="sf-secondary" type="button">この章を最初から</button></dialog>
-<dialog id="confirm" class="sf-dialog" data-game-ui><h2>この章をやり直す？</h2><p>この章の施設・所持品だけが最初に戻ります。他の章の進捗は残ります。</p><button id="restartYes" type="button">最初から始める</button><button id="restartNo" class="sf-secondary" type="button">戻る</button></dialog>`;
+<dialog id="options" class="sf-dialog sf-settings" data-game-ui><header><h2>設定</h2><button id="closeOptions" type="button"></button></header><label>画質<select id="quality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label>肉の自動回収<input id="pickupFood" type="checkbox"></label><label>BGM<input id="music" type="range" min="0" max="100" step="5"></label><label>効果音<input id="effects" type="range" min="0" max="100" step="5"></label><button id="restart" class="sf-secondary" type="button">このステージを最初から</button></dialog>
+<dialog id="confirm" class="sf-dialog" data-game-ui><h2>このステージをやり直す？</h2><p>このステージの施設・所持品だけが最初に戻ります。他のステージの進捗とクリア記録は残ります。</p><button id="restartYes" type="button">最初から始める</button><button id="restartNo" class="sf-secondary" type="button">戻る</button></dialog>`;
 document.querySelector('.shell').append(root);const $=id=>root.querySelector('#'+id),canvas=document.querySelector('#game');
 const renderer=new StoryRenderer(canvas,chapter.id),audio=new GameAudio();await renderer.load();
 let state;try{state=restoreStory(localStorage.getItem(storySaveKey(chapter.id)),chapter.id);}catch{}state??=newStory(chapter.id);
 let paused=false,last=0,saveTimer=0,bannerUntil=0,outcomeShown=false,hidden=document.hidden;
 const input={keys:new Set(),pointerId:null,joyX:0,joyY:0};
 const resetTouch=bindFloatingStick(document.querySelector('.shell'),input,$('stick'),$('thumb'),()=>!paused&&!hidden&&state.status==='playing');
-const stop=()=>{resetTouch();input.keys.clear();};
+const stop=()=>{resetTouch();input.keys.clear();state.investmentActive=null;};
 function save(){if(location.pathname.startsWith('/review/'))return true;try{localStorage.setItem(storySaveKey(chapter.id),saveStory(state));localStorage.setItem('frostline-last-stage-v1',chapter.id);return true;}catch{return false;}}
 let wasPaused=false;bindStageTravel($('map'),{current:chapter.id,onOpen:()=>{wasPaused=paused;paused=true;stop();},onClose:()=>{paused=wasPaused;stop();},beforeTravel:save});
 let journalPaused=false;const narrative=new ChapterNarrative({root,button:$('journal'),chapter:chapter.id,getMission:()=>state.mission,onOpen:()=>{journalPaused=paused;paused=true;stop();},onClose:()=>{paused=journalPaused;stop();}});
@@ -45,8 +47,8 @@ $('intro').addEventListener('cancel',e=>e.preventDefault());
 $('pause').onclick=()=>{paused=!paused;stop();buttonIcon($('pause'),paused?'play':'pause',paused?'再開':'一時停止');};
 $('sound').onclick=()=>{audio.toggle();buttonIcon($('sound'),audio.muted?'muted':'volume',audio.muted?'音をオンにする':'音をオフにする');};
 let settingsPaused=false;$('settings').onclick=()=>{settingsPaused=paused;paused=true;stop();$('pickupFood').checked=state.pickupFood;$('options').showModal();};$('closeOptions').onclick=()=>$('options').close();$('options').addEventListener('close',()=>{paused=settingsPaused;stop();});
-let quality='auto';try{quality=localStorage.getItem('frostline-snowfront-quality')||'auto';}catch{}if(new URLSearchParams(location.search).get('quality')==='low')quality='low';renderer.setQuality(quality);$('quality').value=renderer.quality;
-$('quality').onchange=()=>{renderer.setQuality($('quality').value);try{localStorage.setItem('frostline-snowfront-quality',$('quality').value);}catch{}};
+renderer.setQuality(readDisplayMode());$('quality').value=renderer.quality;
+$('quality').onchange=()=>{renderer.setQuality($('quality').value);$('quality').value=renderer.quality;saveDisplayMode(renderer.quality);};
 for(const bus of ['music','effects']){$(bus).value=audio[bus]*100;$(bus).oninput=()=>audio.setVolume(bus,Number($(bus).value)/100);}
 $('pickupFood').checked=state.pickupFood;$('pickupFood').onchange=()=>{state.pickupFood=$('pickupFood').checked;save();};
 $('restart').onclick=()=>$('confirm').showModal();$('restartNo').onclick=()=>$('confirm').close();$('restartYes').onclick=()=>{state=newStory(chapter.id);renderer.reset();outcomeShown=false;$('confirm').close();$('options').close();paused=false;stop();save();};
@@ -97,7 +99,8 @@ let ui,bagKey='',ledgerKey='',receiptUntil=0;function hud(){
   const rows=goals.map((g,i)=>({label:g.title,value:i<s.mission?g.target:g.value,target:g.target}));
   const repairId=s.mission===0?'relayA':s.mission===1?'relayB':s.mission===3?'relayC':null;
   if(s.chapter==='beacon'&&repairId)rows.push(...storySupplyRows(s,repairId).map(r=>({label:({wood:'木材',ore:'鉱石',kit:'補強材',core:'氷核',cash:'現金'})[r.key]+'の納入',value:r.paid,target:r.required})));
-  const actions=[];if(!$('repair').hidden)actions.push({label:'橇を修理 · 木4 / 金12',icon:'shield',action:()=>$('repair').click(),disabled:p.bag.wood<4||p.cash<12});
+  const actions=[];if(s.investment){const id=s.investment;actions.push(investmentCommand({active:s.investmentActive===id,available:!paused&&!p.moving&&s.blockedPad!==id&&storyCanInvest(s,id),start:()=>startStoryInvestment(state,id),stop:()=>{state.investmentActive=null;}}));stock=s.investmentActive?'投入中':s.blockedPad===id?'完成':storyCanInvest(s,id)?'投資待機':'投入できる資材・現金がありません';}
+  if(!$('repair').hidden)actions.push({label:'橇を修理 · 木4 / 金12',icon:'shield',action:()=>$('repair').click(),disabled:p.bag.wood<4||p.cash<12});
   ui?.update({cash:p.cash,title:goal.title,count:s.completed?'CLEAR':`${Math.min(s.mission+1,goals.length)}/${goals.length}`,progress:s.completed?1:(s.mission+Math.min(1,goal.value/goal.target))/goals.length,hint:$('hint').textContent,completed:s.completed,items:Object.entries(p.bag).map(([k,count])=>({label:{wood:'木材',ore:'鉱石',raw:'生肉',food:'食料',kit:'補強材'}[k],count})),capacity:`資材 ${storyMaterialCapacity(p)}/30 · 食料 ${storyProvisionCapacity(p)}`,rows,note:TRANSFER_POLICY,context:title?{title,text:[detail,stock].filter(Boolean).join(' · '),actions}:actions.length?{title:'補給隊',text:`橇HP ${Math.ceil(s.convoy.hp)}/180`,actions}:null});
 }
 function frame(t){const dt=Math.min(.2,(t-last)/1000||.016);last=t;if(!paused&&!hidden){const k=input.keys,x=input.joyX+Number(k.has('d')||k.has('arrowright'))-Number(k.has('a')||k.has('arrowleft')),y=input.joyY+Number(k.has('s')||k.has('arrowdown'))-Number(k.has('w')||k.has('arrowup'));advanceSimulation((step,input)=>tickStory(state,step,input),dt,screenToWorldInput(x,y));saveTimer+=dt;if(saveTimer>2){save();saveTimer=0;}}

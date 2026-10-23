@@ -7,19 +7,25 @@
   let ready = false;
   let failed = false;
   let timer;
+  let graphicsFailure=false;
   const failure = (heading, text, error) => {
     failed = true;
     clearTimeout(timer);
     window.dispatchEvent(new Event('frostline:fatal'));
     title.textContent = heading;
     message.textContent = text;
-    details.textContent = `${error?.message || String(error || '')}\n${navigator.userAgent}`;
+    graphicsFailure=error?.code==='WEBGL_UNAVAILABLE'||/webgl|context|gpu/i.test(error?.message||'');
+    details.textContent = `${error?.message || String(error || '')}${error?.attempts?'\n'+JSON.stringify(error.attempts):''}\n${navigator.userAgent}`;
     details.hidden = false;
     retry.hidden = false;
+    retry.textContent=graphicsFailure?'軽量モードで再読み込み':'再読み込み';
     panel.hidden = false;
     panel.setAttribute('role', 'alert');
   };
-  retry.addEventListener('click', () => location.reload());
+  retry.addEventListener('click', () => {
+    if(graphicsFailure){const url=new URL(location.href);url.searchParams.set('quality','low');location.assign(url.href);}
+    else location.reload();
+  });
   window.addEventListener('frostline:ready', () => {
     ready = true;
     if (failed) return;
@@ -55,7 +61,7 @@
   launch().catch(error => {
     const gpu = /webgl|context|gpu/i.test(error.message);
     failure('ゲームの起動に失敗しました', gpu
-      ? '3D描画を開始できませんでした。SafariまたはChromeを更新し、ほかのタブを閉じて再読み込みしてください。'
+      ? '3D描画を開始できませんでした。下のボタンで軽量モードを試してください。改善しない場合は他の3Dゲームのタブを閉じ、ブラウザを再起動してください。保存済みの進捗は残っています。'
       : 'ゲームデータを読み込めませんでした。通信状態を確認して再読み込みしてください。', error);
   });
 })();

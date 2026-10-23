@@ -36,7 +36,7 @@ export function loadLifeStage(storage,stage,{restart=false}={}){
   let own=null,previous=null;try{if(!restart)own=read(stage);const stages=Object.keys(LIFE_STAGES),index=stages.indexOf(stage);for(let i=index-1;i>=0&&LIFE_STAGES[stages[i]].theme===LIFE_STAGES[stage].theme;i--){const p=read(stages[i]);if(p?.completed){previous=p;break;}}}catch{}
   return own?inheritLife(own,previous):newLife(stage,previous);
 }
-export function startLifeInvestment(s,id){if(!s.built[id]&&LIFE_STAGES[s.stage].plots[id]&&near(s.player,LIFE_PADS[id],1.6)&&s.player.cash>0){s.investmentActive=id;return true;}return false;}
+export function startLifeInvestment(s,id){if(s.status==='playing'&&!s.player.moving&&!s.built[id]&&s.blockedPad!==id&&LIFE_STAGES[s.stage].plots[id]&&near(s.player,LIFE_PADS[id],1.4)&&s.player.cash>0){s.investmentActive=id;return true;}return false;}
 export function validLifePosition(s,p){
   if(Math.abs(p.x)>15||p.y>17||p.y< -18)return false;
   if(s.theme==='coast'&&p.y< -4.4&&![-9,-3,3,9].some(x=>Math.abs(p.x-x)<1.45))return false;
@@ -91,7 +91,7 @@ function transfer(s,from,key,to,n,fromPoint,toPoint){n=Math.max(0,Math.min(from[
 function industry(s,dt){
   s.transferTimer+=dt;const pulse=s.transferTimer>=.12;if(pulse)s.transferTimer=0;
   s.investment=Object.keys(LIFE_STAGES[s.stage].plots).find(id=>!s.built[id]&&near(s.player,LIFE_PADS[id],1.4))??null;
-  if(s.investmentActive!==s.investment)s.investmentActive=null;
+  if(s.player.moving||s.investmentActive!==s.investment)s.investmentActive=null;
   if(s.blockedPad&&!near(s.player,LIFE_PADS[s.blockedPad],1.65))s.blockedPad=null;
   if(pulse&&!s.player.moving){
     if(s.investmentActive){investLife(s,s.investmentActive,.12);if(!s.player.cash)s.investmentActive=null;}

@@ -46,7 +46,7 @@ export class CampaignHUD{
     this.goalTitle.textContent=view.completed?'ステージクリア':view.title;this.goalCount.textContent=view.count??'';this.goalProgress.value=Math.max(0,Math.min(1,view.progress||0));this.hint.textContent=view.alert??view.hint??'';this.hint.classList.toggle('journey-warning',!!view.alert);
     const bag=(view.items||[]).filter(i=>i.count>0);this.bagCopy.textContent=bag.slice(0,2).map(i=>`${i.label} ${i.count}`).join(' · ')||'荷物なし';this.bagCapacity.textContent=view.capacity??'';
     const c=view.context;this.context.hidden=!c;
-    if(c){this.contextTitle.textContent=c.title;this.contextText.textContent=c.text;const key=JSON.stringify([c.title,(c.actions||[]).map(a=>[a.label,a.disabled])]);if(this.actionKey!==key){this.actionKey=key;this.contextActions.replaceChildren();for(const a of c.actions||[]){const b=el('button','journey-small-command');b.type='button';b.append(icon(a.icon||'play',16),el('span','',a.label));b.disabled=!!a.disabled;b.onclick=a.action;this.contextActions.append(b);}}}
+    if(c){this.contextTitle.textContent=c.title;this.contextText.textContent=c.text;const key=JSON.stringify([c.title,(c.actions||[]).map(a=>[a.label,a.disabled])]);if(this.actionKey!==key){this.actionKey=key;this.contextActions.replaceChildren();for(const [index,a] of (c.actions||[]).entries()){const b=el('button','journey-small-command');b.type='button';b.append(icon(a.icon||'play',16),el('span','',a.label));b.disabled=!!a.disabled;b.onclick=()=>{const current=this.view.context?.actions?.[index];if(current&&!current.disabled)current.action();};this.contextActions.append(b);}}}
     this.toast.hidden=performance.now()>(this.toastUntil||0);this.context.style.bottom=`${this.bottom.getBoundingClientRect().height+26}px`;
   }
   renderDetails(){

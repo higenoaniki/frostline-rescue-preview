@@ -66,7 +66,7 @@ export function newStory(chapter,seed=9417){
   if(!STORY_IDS.includes(chapter))throw Error('Unknown story chapter');
   const s={version:1,chapter,seed,time:0,status:'playing',completed:false,mission:0,weapon:chapter==='pass'?1:2,armor:0,
     player:{x:0,y:7,hp:100,facing:-Math.PI/2,moving:false,bag:{wood:chapter==='beacon'?12:0,ore:chapter==='beacon'?12:0,raw:0,food:chapter==='pass'?6:0,kit:chapter==='beacon'?2:0},cash:chapter==='pass'?36:chapter==='highland'?48:96,cooldown:0,invulnerable:0,motion:null},
-    built:{bridge:false,mine:chapter==='beacon',forge:chapter==='beacon',miner:false,guard:false,relayA:false,relayB:false,relayC:false},paid:{},blockedPad:null,investment:null,
+    built:{bridge:false,mine:chapter==='beacon',forge:chapter==='beacon',miner:false,guard:false,relayA:false,relayB:false,relayC:false},paid:{},blockedPad:null,investment:null,investmentActive:null,
     rawStock:0,foodStock:0,forgeWood:0,forgeOre:0,kitStock:0,foodDelivered:0,delivered:0,crafted:0,rescued:0,core:false,coreRecovered:false,pickupFood:true,
     work:{wood:0,ore:0,kills:0,guardKills:0},cookTimer:0,forgeTimer:0,minerTimer:0,transferTimer:0,spawnTimer:0,guardTimer:0,guardMotion:null,
     nodes:nodesFor(chapter),enemies:[],drops:[],events:[],sequence:0,finale:null,
@@ -96,6 +96,11 @@ export function moveStoryActor(s,p,target,speed,dt){
   return d<.2;
 }
 export function storyObstacles(s){return [{x:-5,y:3.5,r:1.3},{x:-2,y:3.5,r:1},{x:5,y:14,r:1.5},{x:-5,y:14,r:1},...(s.built.forge?[{x:9,y:3.5,r:1.5}]:[])];}
+export function storyCanInvest(s,id){return storySupplyRows(s,id).some(r=>r.paid<r.required&&r.carried>0);}
+export function startStoryInvestment(s,id){
+  if(s.status!=='playing'||s.player.moving||!storyAvailable(s,id)||s.blockedPad===id||!near(s.player,STORY_PADS[id==='mine'?'bridge':id])||!storyCanInvest(s,id))return false;
+  s.investmentActive=id;return true;
+}
 export function investStory(s,id,dt){
   if(!storyAvailable(s,id)||s.blockedPad===id)return false;
   const cost=storyCost(s,id),paid=s.paid[id]??={};
@@ -107,7 +112,7 @@ export function investStory(s,id,dt){
   }
   if(!Object.entries(cost).every(([key,total])=>(paid[key]||0)>=total))return false;
   if(id==='weapon'){s.weapon++;s.paid[id]={};}else if(id==='armor'){s.armor++;s.paid[id]={};}else s.built[id]=true;
-  s.blockedPad=id;emit(s,'build',{id,...STORY_PADS[id==='mine'?'bridge':id]});return true;
+  s.blockedPad=id;s.investmentActive=null;emit(s,'build',{id,...STORY_PADS[id==='mine'?'bridge':id]});return true;
 }
 function addDrop(s,type,amount,p){const pile=type==='raw'&&s.drops.find(d=>d.type==='raw'&&dist(d,p)<2);if(pile){pile.amount+=amount;pile.age=0;}else s.drops.push({id:++s.sequence,type,amount,x:p.x,y:p.y,age:0});}
 function kill(s,e){
@@ -164,9 +169,11 @@ function interactions(s,dt){
     const free=d.type==='raw'?STORY_PROVISION_LIMIT-storyProvisionCapacity(p):STORY_MATERIAL_LIMIT-storyMaterialCapacity(p);
     const n=Math.max(0,Math.min(d.amount,free));if(!n)continue;b[d.type]+=n;d.amount-=n;emit(s,'pickup',{item:d.type,count:n,x:d.x,y:d.y});if(!d.amount)s.drops.splice(s.drops.indexOf(d),1);
   }
-  s.transferTimer+=dt;if(s.transferTimer<.1)return;s.transferTimer=0;s.investment=null;
+  s.investment=['weapon','armor','bridge','mine','forge','miner','guard','relayA','relayB','relayC'].find(id=>storyAvailable(s,id)&&near(p,STORY_PADS[id==='mine'?'bridge':id]))??null;
+  if(s.player.moving||s.investmentActive!==s.investment||s.investmentActive&&!storyCanInvest(s,s.investmentActive))s.investmentActive=null;
+  s.transferTimer+=dt;if(s.transferTimer<.1)return;s.transferTimer=0;
   if(s.blockedPad){const pos=STORY_PADS[s.blockedPad==='mine'?'bridge':s.blockedPad];if(!near(p,pos,1.65))s.blockedPad=null;}
-  for(const id of ['weapon','armor','bridge','mine','forge','miner','guard','relayA','relayB','relayC'])if(storyAvailable(s,id)&&near(p,STORY_PADS[id==='mine'?'bridge':id])){s.investment=id;investStory(s,id,.1);break;}
+  if(s.investmentActive)investStory(s,s.investmentActive,.1);
   if(near(p,STORY_PADS.cook))deposit(s,b,'raw',s,'rawStock',3,{...p},STORY_PADS.cook);
   if(near(p,STORY_PADS.food))deposit(s,s,'foodStock',b,'food',Math.max(0,Math.min(3,STORY_PROVISION_LIMIT-storyProvisionCapacity(p))),STORY_PADS.food,{...p});
   if(near(p,STORY_PADS.trade)){
@@ -262,7 +269,7 @@ function productionTarget(s){
 }
 export function saveStory(s,includeCheckpoint=true){
   const {events,checkpoint,...data}=s;
-  return JSON.stringify({...data,player:{...s.player,motion:null},enemies:s.enemies.map(e=>({...e,motion:null})),...(includeCheckpoint?{checkpoint}: {})});
+  return JSON.stringify({...data,investmentActive:null,player:{...s.player,motion:null,moving:false},enemies:s.enemies.map(e=>({...e,motion:null})),...(includeCheckpoint?{checkpoint}: {})});
 }
 export function restoreStory(raw,chapter){
   try{
@@ -273,7 +280,7 @@ export function restoreStory(raw,chapter){
     for(const key of Object.keys(s))if(!['chapter','version','events','checkpoint','status'].includes(key)&&data[key]!==undefined)s[key]=data[key];
     s.weapon=clamp(Math.floor(s.weapon),1,3);s.armor=clamp(Math.floor(s.armor),0,2);s.mission=clamp(Math.floor(s.mission),0,storyMissions(s).length);
     if(!Array.isArray(s.nodes)||s.nodes.length!==12||!s.nodes.every(n=>['wood','ore'].includes(n.type)&&[n.x,n.y,n.remaining,n.respawn].every(Number.isFinite))||!Array.isArray(s.enemies)||!Array.isArray(s.survivors)||s.survivors.length!==3||!s.convoy||![s.convoy.hp,s.convoy.progress,s.convoy.x,s.convoy.y].every(Number.isFinite))return null;
-    s.player.hp=clamp(s.player.hp,1,100);s.player.cash=Math.max(0,Math.floor(s.player.cash));s.player.motion=null;s.player.cooldown=0;s.player.invulnerable=1;
+    s.player.hp=clamp(s.player.hp,1,100);s.player.cash=Math.max(0,Math.floor(s.player.cash));s.player.motion=null;s.player.moving=false;s.player.cooldown=0;s.player.invulnerable=1;s.investmentActive=null;s.investment=null;
     s.coreRecovered=!!(s.coreRecovered||s.core||s.paid.relayC?.core||s.built.relayC);s.pickupFood=data.pickupFood!==false;
     const previousMission=s.mission;
     if(chapter==='beacon')while(s.mission<storyMissions(s).length&&storyMissions(s)[s.mission].value>=1)s.mission++;

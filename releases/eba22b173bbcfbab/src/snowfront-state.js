@@ -33,12 +33,16 @@ export function buildAvailable(s,id){
 }
 export function investmentCost(s,id){return id==='weapon'?(s.weapon===1?24:54):BUILD_COST[id]??0;}
 export function investmentPad(s){return ['weapon',...Object.keys(BUILD_COST)].find(id=>!s.built[id]&&buildAvailable(s,id)&&near(s.player,PADS[id]));}
+export function startSnowfrontInvestment(s,id){
+  if(s.status!=='playing'||s.player.moving||investmentPad(s)!==id||s.blockedPad===id||s.player.cash<=0)return false;
+  s.investmentActive=id;return true;
+}
 function event(s,type,data={}){s.events.push({type,...data});if(s.events.length>96)s.events.shift();}
 const bagCount=p=>p.bag.raw+p.bag.roast+p.bag.fur+p.bag.crate;
 export function newSnowfront(seed=8128){
   const s={version:1,seed,time:0,status:'playing',mission:0,completed:false,freeplay:false,weapon:1,
     player:{x:0,y:6,hp:100,facing:-Math.PI/2,moving:false,bag:{raw:0,roast:0,fur:0,crate:0},cash:0,cooldown:0,invulnerable:0,motion:null,swings:0},
-    built:Object.fromEntries(Object.keys(BUILD_COST).map(k=>[k,false])),paid:{},blockedPad:null,investment:null,
+    built:Object.fromEntries(Object.keys(BUILD_COST).map(k=>[k,false])),paid:{},blockedPad:null,investment:null,investmentActive:null,
     rawStock:0,roastStock:0,marketStock:0,cashStock:0,smokeRaw:0,smokeFur:0,crateStock:0,
     sold:0,gathered:0,kills:0,wolfKills:0,crafted:0,delivered:0,cookTimer:0,smokeTimer:0,transferTimer:0,spawnTimer:0,tradeTimer:0,turretTimer:0,
     worker:{x:-4,y:5.7,hp:80,load:0,phase:'idle',cooldown:0,facing:0,moving:false},
@@ -102,14 +106,17 @@ function collect(s,actor,worker=false){
 export function invest(s,dt){
   const id=investmentPad(s);
   if(s.blockedPad&&!near(s.player,PADS[s.blockedPad],1.45))s.blockedPad=null;
-  s.investment=id??null;if(!id||s.blockedPad===id)return;
+  s.investment=id??null;
+  if(s.player.moving||s.investmentActive!==id||s.player.cash<=0)s.investmentActive=null;
+  if(!id||s.blockedPad===id||s.investmentActive!==id)return;
   const cost=investmentCost(s,id),remaining=cost-(s.paid[id]||0),amount=Math.min(remaining,s.player.cash,Math.max(1,Math.ceil(dt*100)));
   if(amount<=0)return;s.player.cash-=amount;s.paid[id]=(s.paid[id]||0)+amount;
   event(s,'pay',{id,amount,from:{x:s.player.x,y:s.player.y},to:PADS[id]});
   if(s.paid[id]>=cost){
     if(id==='weapon'){s.weapon++;s.paid[id]=0;}else s.built[id]=true;
-    s.blockedPad=id;event(s,'build',{id,x:PADS[id].x,y:PADS[id].y});
+    s.blockedPad=id;s.investmentActive=null;event(s,'build',{id,x:PADS[id].x,y:PADS[id].y});
   }
+  if(s.player.cash<=0)s.investmentActive=null;
 }
 function playerCombat(s,dt){
   const p=s.player;p.cooldown=Math.max(0,p.cooldown-dt);p.invulnerable=Math.max(0,p.invulnerable-dt);

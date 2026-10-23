@@ -1,4 +1,6 @@
-import{newSnowfront,tickSnowfront,saveSnowfront,restoreSnowfront,retrySnowfront,SNOWFRONT_KEY,MISSIONS,PADS,BUILD_COST,investmentCost}from'./snowfront-state.js';
+import{newSnowfront,tickSnowfront,saveSnowfront,restoreSnowfront,retrySnowfront,SNOWFRONT_KEY,MISSIONS,PADS,BUILD_COST,investmentCost,startSnowfrontInvestment}from'./snowfront-state.js';
+import {investmentCommand} from './investment-command.js';
+import {readDisplayMode,saveDisplayMode} from './display-settings.js';
 import{SnowfrontRenderer}from'./snowfront-renderer.js';
 import{bindFloatingStick}from'./touch-controls.js';
 import{bindStageTravel,stageUrl}from'./stage-travel.js';
@@ -26,8 +28,8 @@ const root=document.createElement('section');root.id='snowfrontRoot';root.classN
  <footer class="sf-bag" data-game-ui><div id="sfBagItems"></div><span id="sfCapacity"></span></footer>
  <div class="joystick" id="sfJoystick" aria-hidden="true"><span id="sfStick"></span></div>
  <dialog id="sfOutcome" class="sf-dialog" data-game-ui><div id="sfOutcomeIcon"></div><small id="sfOutcomeKicker"></small><h2 id="sfOutcomeTitle"></h2><p id="sfOutcomeText"></p><button id="sfOutcomeAction" type="button"></button><button id="sfOutcomeContinue" class="sf-secondary" type="button" hidden>交易を続ける</button><button id="sfOutcomeMap" class="sf-secondary" type="button">遠征マップ</button></dialog>
- <dialog id="sfSettings" class="sf-dialog sf-settings" data-game-ui><header><h2>設定</h2><button id="sfSettingsClose" type="button" aria-label="閉じる"></button></header><label>画質<select id="sfQuality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label>BGM<input id="sfMusic" type="range" min="0" max="100" step="5"></label><label>効果音<input id="sfEffects" type="range" min="0" max="100" step="5"></label><button id="sfRestart" class="sf-secondary" type="button">この遠征を最初から</button><p class="sf-save-note">他の遠征の進捗は変更されません。</p></dialog>
- <dialog id="sfRestartConfirm" class="sf-dialog" data-game-ui><h2>雪原交易路をやり直す？</h2><p>この遠征の施設・所持品・開拓状況を最初に戻します。</p><button id="sfRestartYes" type="button">最初から始める</button><button id="sfRestartNo" class="sf-secondary" type="button">戻る</button></dialog>`;
+ <dialog id="sfSettings" class="sf-dialog sf-settings" data-game-ui><header><h2>設定</h2><button id="sfSettingsClose" type="button" aria-label="閉じる"></button></header><label>画質<select id="sfQuality"><option value="auto">自動</option><option value="detail">標準</option><option value="low">軽量</option></select></label><label>BGM<input id="sfMusic" type="range" min="0" max="100" step="5"></label><label>効果音<input id="sfEffects" type="range" min="0" max="100" step="5"></label><button id="sfRestart" class="sf-secondary" type="button">このステージを最初から</button><p class="sf-save-note">他のステージの進捗とクリア記録は残ります。</p></dialog>
+ <dialog id="sfRestartConfirm" class="sf-dialog" data-game-ui><h2>このステージをやり直す？</h2><p>このステージの施設・所持品・開拓状況を最初に戻します。他のステージの進捗とクリア記録は残ります。</p><button id="sfRestartYes" type="button">最初から始める</button><button id="sfRestartNo" class="sf-secondary" type="button">戻る</button></dialog>`;
 document.querySelector('.shell').append(root);
 const $=id=>root.querySelector('#'+id),canvas=document.querySelector('#game');
 const audio=new GameAudio(),renderer=new SnowfrontRenderer(canvas);
@@ -36,7 +38,7 @@ let state;try{state=restoreSnowfront(localStorage.getItem(SNOWFRONT_KEY));}catch
 const input={keys:new Set(),pointerId:null,joyX:0,joyY:0};let paused=false,hidden=document.hidden,last=0,saveTimer=0,bannerUntil=0,outcomeShown=false,quality='auto';
 const resetTouch=bindFloatingStick(document.querySelector('.shell'),input,$('sfJoystick'),$('sfStick'),()=>!paused&&!hidden&&state.status==='playing');
 const save=()=>{if(location.pathname.startsWith('/review/'))return true;try{localStorage.setItem(SNOWFRONT_KEY,saveSnowfront(state));localStorage.setItem('frostline-last-stage-v1','snowfront');return true;}catch{return false;}};
-function stop(){resetTouch();input.keys.clear();}
+function stop(){resetTouch();input.keys.clear();state.investmentActive=null;}
 let travelWasPaused=false;const travel=bindStageTravel($('sfTravelButton'),{current:'snowfront',onOpen:()=>{travelWasPaused=paused;paused=true;stop();},onClose:()=>{paused=travelWasPaused;stop();},beforeTravel:save});
 const journalButton=document.createElement('button');journalButton.type='button';$('sfTravelButton').after(journalButton);let journalPaused=false;
 const narrative=new ChapterNarrative({root,button:journalButton,chapter:'snowfront',getMission:()=>state.mission,onOpen:()=>{journalPaused=paused;paused=true;stop();},onClose:()=>{paused=journalPaused;stop();}});
@@ -47,10 +49,7 @@ $('sfPause').onclick=()=>{paused=!paused;stop();buttonIcon($('sfPause'),paused?'
 let settingsWasPaused=false;$('sfSettingsButton').onclick=()=>{settingsWasPaused=paused;paused=true;stop();$('sfSettings').showModal();};
 $('sfSettingsClose').onclick=()=>$('sfSettings').close();$('sfSettings').addEventListener('close',()=>{paused=settingsWasPaused;stop();});
 for(const [id,bus]of [['sfMusic','music'],['sfEffects','effects']]){$(id).value=Math.round(audio[bus]*100);$(id).oninput=()=>audio.setVolume(bus,Number($(id).value)/100);}
-try{quality=localStorage.getItem('frostline-snowfront-quality')||'auto';}catch{}
-if(!['auto','detail','low'].includes(quality))quality='auto';
-if(new URLSearchParams(location.search).get('quality')==='low')quality='low';
-$('sfQuality').value=quality;renderer.setQuality(quality);$('sfQuality').onchange=()=>{quality=$('sfQuality').value;renderer.setQuality(quality);try{localStorage.setItem('frostline-snowfront-quality',quality);}catch{}};
+renderer.setQuality(readDisplayMode());$('sfQuality').value=renderer.quality;$('sfQuality').onchange=()=>{renderer.setQuality($('sfQuality').value);$('sfQuality').value=renderer.quality;saveDisplayMode(renderer.quality);};
 $('sfRestart').onclick=()=>$('sfRestartConfirm').showModal();$('sfRestartNo').onclick=()=>$('sfRestartConfirm').close();
 $('sfRestartYes').onclick=()=>{state=newSnowfront();renderer.reset();outcomeShown=false;save();$('sfRestartConfirm').close();$('sfSettings').close();paused=false;stop();};
 $('sfOutcomeAction').onclick=async()=>{
@@ -102,7 +101,7 @@ let ui,lastHud='';function hud(){
   const bagKey=JSON.stringify(p.bag);if(lastHud!==bagKey){lastHud=bagKey;$('sfBagItems').replaceChildren();for(const [type,title,symbol]of [['raw','生肉','beef'],['roast','焼肉','layers'],['fur','毛皮','snow'],['crate','荷箱','package']]){const span=document.createElement('span');span.append(icon(symbol,19),document.createTextNode(`${title} ${p.bag[type]}`));$('sfBagItems').append(span);}}
   $('sfCapacity').textContent=`${Object.values(p.bag).reduce((a,b)=>a+b,0)} / 30`;
   const id=s.investment;$('sfInvestment').hidden=!id;
-  if(id){const cost=investmentCost(s,id),paid=s.paid[id]||0;$('sfInvestmentName').textContent=id==='weapon'?`斧 Lv.${s.weapon+1}`:'未開拓の投資枠';$('sfInvestmentValue').textContent=`${paid} / ${cost}${p.cash===0?' · 現金不足':''}`;$('sfInvestmentProgress').max=cost;$('sfInvestmentProgress').value=paid;}
+  if(id){const cost=investmentCost(s,id),paid=s.paid[id]||0;$('sfInvestmentName').textContent=id==='weapon'?`斧 Lv.${s.weapon} → ${s.weapon+1}`:'未開拓の投資枠';$('sfInvestmentValue').textContent=`現金 ${paid} / ${cost} · ${s.investmentActive?'投入中':s.blockedPad===id?'完成':p.cash===0?'現金不足':'投資待機'}`;$('sfInvestmentProgress').max=cost;$('sfInvestmentProgress').value=paid;}
   const context=facilityContext(s);$('sfContext').hidden=!!id||!context;
   if(context){$('sfContextTitle').textContent=context.title;$('sfContextDetail').textContent=context.detail;$('sfContextStock').textContent=context.stock;}
   $('sfCelebrate').hidden=performance.now()>bannerUntil;
@@ -111,7 +110,7 @@ let ui,lastHud='';function hud(){
     if(won&&!location.pathname.startsWith('/review/')){try{completeChapter(localStorage,'snowfront');completeStage(localStorage,'snowfront');}catch{}}
     save();
   }
-  ui?.update({cash:p.cash,title:goal.title,count:s.completed?'CLEAR':`${Math.min(s.mission+1,6)}/6`,progress:s.completed?1:(s.mission+Math.min(1,goal.value(s)/goal.target))/6,hint:$('sfNext').textContent,completed:s.completed,items:Object.entries(p.bag).map(([k,count])=>({label:{raw:'生肉',roast:'焼肉',fur:'毛皮',crate:'荷箱'}[k],count})),capacity:`荷物 ${Object.values(p.bag).reduce((a,b)=>a+b,0)}/30`,rows:MISSIONS.map((g,i)=>({label:g.title,value:i<s.mission?g.target:Math.min(g.target,g.value(s)),target:g.target})),note:TRANSFER_POLICY,context:id?{title:$('sfInvestmentName').textContent,text:$('sfInvestmentValue').textContent}:context?{title:context.title,text:[context.detail,context.stock].join(' · ')}:null});
+  ui?.update({cash:p.cash,title:goal.title,count:s.completed?'CLEAR':`${Math.min(s.mission+1,6)}/6`,progress:s.completed?1:(s.mission+Math.min(1,goal.value(s)/goal.target))/6,hint:$('sfNext').textContent,completed:s.completed,items:Object.entries(p.bag).map(([k,count])=>({label:{raw:'生肉',roast:'焼肉',fur:'毛皮',crate:'荷箱'}[k],count})),capacity:`荷物 ${Object.values(p.bag).reduce((a,b)=>a+b,0)}/30`,rows:MISSIONS.map((g,i)=>({label:g.title,value:i<s.mission?g.target:Math.min(g.target,g.value(s)),target:g.target})),note:TRANSFER_POLICY,context:id?{title:$('sfInvestmentName').textContent,text:$('sfInvestmentValue').textContent,actions:[investmentCommand({active:s.investmentActive===id,available:!paused&&!p.moving&&p.cash>0&&s.blockedPad!==id,start:()=>startSnowfrontInvestment(state,id),stop:()=>{state.investmentActive=null;}})]}:context?{title:context.title,text:[context.detail,context.stock].join(' · ')}:null});
 }
 function frame(t){
   const dt=Math.min(.2,(t-last)/1000||.016);last=t;
@@ -130,4 +129,4 @@ function isSafeForAudio(){return state.player.y>=0;}
 ui=new CampaignHUD({stage:'snowfront',isPaused:()=>paused,pause:v=>{paused=v;},stop,save,restart:()=>$('sfRestartYes').click(),travel:()=>$('sfTravelButton').click(),settings:()=>$('sfSettingsButton').click(),journal:()=>journalButton.click()});
 renderer.render(state,0);hud();canvas.dataset.art='snowfront-v1';window.dispatchEvent(new Event('frostline:ready'));requestAnimationFrame(frame);
 chapterPrelude('snowfront',{onOpen:()=>{paused=true;stop();},onClose:()=>{paused=false;stop();}});
-export{state,renderer,tickSnowfront,saveSnowfront};
+export{state,renderer,tickSnowfront,saveSnowfront,hud};

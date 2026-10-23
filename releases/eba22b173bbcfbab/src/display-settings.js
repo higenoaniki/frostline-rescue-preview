@@ -1,5 +1,15 @@
 import { buttonIcon } from './icons.js';
 
+export function readDisplayMode(storage,search=globalThis.location?.search||''){
+  if(new URLSearchParams(search).get('quality')==='low')return 'low';
+  try{storage??=globalThis.localStorage;const value=storage?.getItem('frostline-display-v1')||storage?.getItem('frostline-snowfront-quality');if(['auto','detail','low'].includes(value))return value;}catch{}
+  return 'auto';
+}
+export function saveDisplayMode(mode,storage){
+  if(!['auto','detail','low'].includes(mode))return;
+  try{storage??=globalThis.localStorage;storage?.setItem('frostline-display-v1',mode);storage?.setItem('frostline-snowfront-quality',mode);}catch{}
+}
+
 export class DisplaySettings {
   constructor(renderer, { onOpen, onClose }) {
     this.renderer=renderer;this.panel=document.querySelector('#displaySettings');this.onClose=onClose;

@@ -1,0 +1,10 @@
+{
+  "original": true,
+  "composer": "Frostline Rescue procedural acoustic score",
+  "script": "scripts/compose-journey-audio.mjs",
+  "music": [
+    "harbor-morning.mp3",
+    "orchard-afternoon.mp3"
+  ],
+  "sources": "Original mathematical instrument synthesis and original seeded noise sound design. No external recordings."
+}

@@ -38,9 +38,9 @@ export function stageUnlocked(storage,id){
   const done=completedStages(storage),highest=Math.max(-1,...done.map(id=>stageFor(id).index));
   return stage.index<=highest+1||hasStageSave(storage,id);
 }
-export function stageSaveKey(id){return id==='camp'?'frostline-camp-v1':id==='snowfront'?'frostline-snowfront-v1':stageFor(id).engine==='life'?`frostline-life-${id}-v1`:`frostline-story-${id}-v1`;}
-export function hasStageSave(storage,id){try{return !!storage.getItem(stageSaveKey(id));}catch{return false;}}
+export function stageSaveKey(id){return id==='camp'?'frostline-camp-v1':id==='snowfront'?'frostline-snowfront-v1':stageFor(id).engine==='life'?`frostline-life-${id}-v2`:`frostline-story-${id}-v1`;}
+export function hasStageSave(storage,id){try{return !!(storage.getItem(stageSaveKey(id))||stageFor(id).engine==='life'&&storage.getItem(`frostline-life-${id}-v1`));}catch{return false;}}
 export function suggestedStage(storage){
   const done=completedStages(storage);return STAGES.find(s=>!done.includes(s.id)&&stageUnlocked(storage,s.id))??STAGES.at(-1);
 }
-export const TRANSFER_POLICY='現地の荷物・設備・強化はこの場所に残ります。次のステージは新しい支給品で開始。クリア記録・衣装・通信記録は残ります。';
+export const TRANSFER_POLICY='クリア記録は残ります。第1章の拠点は個別に保存。第2・3章は章内で街・設備・道具・荷物を引き継いで拡張し、新しい章へ渡る時に支給品で再出発します。';

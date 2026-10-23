@@ -45,6 +45,7 @@
     const params=new URLSearchParams(location.search),stage=params.get('stage'),view=params.get('view');
     const {STAGES,stageUnlocked}=await import('./campaign-catalog.js');
     const life=STAGES.find(s=>s.id===stage&&s.engine==='life');
+    const {chapterArt}=await import('./chapter-art.js');const art=document.querySelector('.boot-art');if(art)art.src=chapterArt(life?.theme??'winter');
     const menu=view==='menu'||view==='title'||!stage&&params.get('play')!=='1'&&!params.has('qa-boot');
     if(menu||life&&!stageUnlocked(localStorage,stage)&&!location.pathname.startsWith('/review/'))return import('./journey-menu.js');
     const gameModule=life?'./life-main.js':['pass','highland','beacon'].includes(stage)?'./story-main.js'

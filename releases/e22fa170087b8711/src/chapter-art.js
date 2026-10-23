@@ -1,0 +1,1 @@
+export const chapterArt=theme=>new URL(theme==='coast'?'../assets/title/journey-key-art-v1.jpg':theme==='farm'?'../assets/title/farm-key-art-v1.jpg':'../assets/title/key-art-story-v1.jpg',import.meta.url).href;

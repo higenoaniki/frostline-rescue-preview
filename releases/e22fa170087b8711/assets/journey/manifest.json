@@ -1,5 +1,5 @@
 {
-  "revision": "journey-v1",
+  "revision": "journey-v2",
   "original": true,
   "assets": [
     "journey-basket",
@@ -39,6 +39,6 @@
     "journey-well",
     "journey-wheel"
   ],
-  "costumes": "8 original 13-bone summer-clothed characters, including Ao; no winter hood meshes",
-  "triangles": 303408
+  "costumes": "8 original 13-bone summer costumes; rounded face sculpts, inset almond eyes, swept hair, tailored workwear",
+  "triangles": 433816
 }

@@ -4,6 +4,7 @@ export class GameAudio {
     try { this.storage = environment.storage ?? globalThis.localStorage; } catch {}
     Object.assign(this, readAudioSettings(this.storage));
     this.environment = environment; this.context = null;
+    this.cues = {...AUDIO_CUES,...environment.cues};
     this.buffers = new Map(); this.loading = new Map(); this.last = new Map();
     this.voices = new Set(); this.variants = new Map();
     this.hidden = false; this.paused = false; this.duckUntil = 0;
@@ -24,7 +25,7 @@ export class GameAudio {
         this.effectsBus.connect(this.master); this.musicBus.connect(this.master);
         const mediaFactory = this.environment.mediaFactory || (() => new Audio());
         this.musicElement = mediaFactory();
-        this.musicElement.loop = true; this.musicElement.preload = 'none'; this.musicElement.src = MUSIC_URL;
+        this.musicElement.loop = true; this.musicElement.preload = 'none'; this.musicElement.src = this.environment.musicUrl || MUSIC_URL;
         this.musicElement.addEventListener('error', () => {});
         this.musicSource = c.createMediaElementSource(this.musicElement); this.musicSource.connect(this.musicBus);
         this.musicBus.gain.value = 0; this.effectsBus.gain.value = this.effects;
@@ -32,7 +33,7 @@ export class GameAudio {
       this.unlocked = true;
       // Start in the gesture itself, before any asynchronous sample download.
       this.context.resume().catch(() => {}); this.syncMusic();
-      for (const cue of Object.values(AUDIO_CUES)) for (const file of cue.files) this.load(file);
+      for (const cue of Object.values(this.cues)) for (const file of cue.files) this.load(file);
     } catch { /* Unsupported/blocked audio must not stop the game. */ }
   }
   load(file) {
@@ -96,7 +97,7 @@ export class GameAudio {
   }
   stopVoices() { for (const voice of [...this.voices]) { try { voice.source.stop(); } catch {} voice.cleanup(); } }
   play(name) {
-    const c = this.context, cue = AUDIO_CUES[name];
+    const c = this.context, cue = this.cues[name];
     if (!cue || this.muted || this.hidden || !c || c.state !== 'running' || this.effects === 0) return false;
     if (this.paused && cue.priority < 3) return false;
     const now = c.currentTime;

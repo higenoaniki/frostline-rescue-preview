@@ -4,6 +4,7 @@ import { PLAYER_SPEED, SALE_PRICE, STORAGE_LIMIT, UPGRADE_SPECS, WEAPON_DAMAGE, 
 import { advanceObjective } from './campaign.js';
 import {chapterFor,completeChapter} from './chapters.js';
 import {chapterPrelude} from './chapter-prelude.js';
+import {ChapterNarrative} from './chapter-narrative.js';
 import {stageUrl} from './stage-travel.js';
 import { readCampaign, writeCampaign, restoreCampaign } from './persistence.js';
 import { resetAutomation, updateAutomation } from './automation.js';
@@ -208,6 +209,7 @@ const drops = [];
 const floaters = [];
 const particles = [];
 let resetTouch = () => {};
+let narrative;
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -250,6 +252,9 @@ function start() {
   updateHud();
   if (TOP_MENU_ENABLED) showHome();
   else enterRegion('valley');
+  const journalButton=document.createElement('button');journalButton.type='button';journalButton.className='icon-button';document.querySelector('#stageTravelButton').after(journalButton);
+  let journalPaused=false;
+  narrative=new ChapterNarrative({root:document.querySelector('.shell'),button:journalButton,chapter:'camp',getMission:()=>state.campaignComplete?12:state.stage-1,onOpen:()=>{journalPaused=state.paused;state.paused=true;resetTouch();state.input.keys.clear();},onClose:()=>{state.paused=journalPaused;}});
   if (!TOP_MENU_ENABLED) chapterPrelude('camp', {onOpen:()=>{state.paused=true;},onClose:()=>{state.paused=false;resetTouch();}});
   window.addEventListener('pagehide', () => { audio.setActivity({ hidden: true }); flushCampaign(); });
   window.addEventListener('frostline:fatal', () => {
@@ -1058,6 +1063,7 @@ function spawnEnemy(band = Math.random() < 0.55 ? 'near' : Math.random() < 0.55 
 function checkStageClear() {
   const result = advanceObjective(state);
   if (!result) return;
+  narrative?.announce(result.final?12:state.stage-1);
   ensureBoss();
   if (result.final) {
     if (state.saveEnabled) { try { markRegionComplete(localStorage, state.region); } catch {} }
@@ -1109,6 +1115,7 @@ function flushCampaign() {
 }
 
 function updateHud() {
+  narrative?.update();
   document.querySelector('#regionName').textContent = `${regionFor(state.region).number} ${regionFor(state.region).name}`;
   const powerPct = clamp(state.player.attack / 8, 0, 1);
   const fencePct = clamp(state.defense.hp / state.defense.hpMax, 0, 1);

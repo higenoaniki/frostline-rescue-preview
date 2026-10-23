@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three.module.js';
 import { WORLD, SAFE, toX, toZ } from './world-config.js';
+import {snowSurfaceMap,softenSnowMaterial} from './snow-landscape.js';
 
 const smooth = n => { const t = Math.min(1, Math.max(0, n)); return t * t * (3 - 2 * t); };
 export const fieldHeight = (x, y) => 6 + Math.sin(x * .012) * Math.sin(y * .009) * 3 + Math.cos(x * .007 + y * .011) * 2
@@ -19,6 +20,7 @@ export function buildFieldSurface(a) {
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3)); geometry.computeVertexNormals();
   const material = a.m.snow.clone(); material.vertexColors = !a.toon; material.onBeforeCompile = a.m.snow.onBeforeCompile;
+  if(a.toon){material.map=snowSurfaceMap(14,32);material.vertexColors=true;softenSnowMaterial(material);}
   const ground = new THREE.Mesh(geometry, material); ground.receiveShadow = true; group.add(ground);
   if(a.toon)return group;
   for (let i = 0; i < 155; i++) {

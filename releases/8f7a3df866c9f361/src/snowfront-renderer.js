@@ -5,6 +5,8 @@ import {OutlineEffect}from'./vendor/OutlineEffect.js';
 import {canonicalizeProductionRig}from'./production-rig.js';
 import {mergeGeometries}from'./vendor/BufferGeometryUtils.js';
 import {PADS,BUILD_COST,investmentCost,buildAvailable,isSafe}from'./snowfront-state.js';
+import {campPerimeter} from './camp-perimeter.js';
+import {SnowLandscape,snowHeight} from './snow-landscape.js';
 
 const lerp=(a,b,t)=>a+(b-a)*t;
 const names={raw:'獲物を投入',roast:'焼き肉回収',sale:'販売・納品',cash:'売上回収',weapon:'斧を強化',east:'東区画',west:'西区画',smoker:'燻製工房',smoked:'荷箱回収',collector:'回収人',hunter:'自動狩り台',porter:'運搬係'};
@@ -24,6 +26,7 @@ export class SnowfrontRenderer{
     this.staticRoot=new T.Group();this.camp=new T.Group();this.gates=new T.Group();this.scene.add(this.staticRoot,this.camp,this.gates);
     this.groundMat=new T.MeshToonMaterial({color:0xf0f3f5,gradientMap:this.gradient});
     const ground=new T.Mesh(new T.PlaneGeometry(160,160),this.groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.userData.outlineParameters={visible:false};this.scene.add(ground);
+    ground.rotation.x=0;this.landscape=new SnowLandscape(this.scene,ground);
     this.footRing=new T.Mesh(new T.RingGeometry(.55,.65,48),new T.MeshBasicMaterial({color:0x49c4bd,transparent:true,opacity:.7,depthWrite:false}));this.footRing.rotation.x=-Math.PI/2;this.footRing.userData.outlineParameters={visible:false};this.scene.add(this.footRing);
     this.guide=new T.Mesh(new T.ConeGeometry(.2,.6,3),new T.MeshBasicMaterial({color:0x269ab8}));this.guide.rotation.x=Math.PI/2;this.guide.userData.outlineParameters={visible:false};this.scene.add(this.guide);
     const snow=new Float32Array(96*3);for(let i=0;i<96;i++){snow[i*3]=(Math.sin(i*12.4)*.5)*70;snow[i*3+1]=(i*.29)%15;snow[i*3+2]=Math.cos(i*3.8)*35;}
@@ -62,6 +65,7 @@ export class SnowfrontRenderer{
   }
   setQuality(mode){this.quality=['auto','detail','low'].includes(mode)?mode:'auto';const shadows=this.quality!=='low';this.effect.enabled=shadows;this.renderer.shadowMap.enabled=shadows;this.sun.castShadow=shadows;this.renderer.shadowMap.needsUpdate=true;this.scene.traverse(n=>{if(n.isMesh){for(const m of Array.isArray(n.material)?n.material:[n.material])m.needsUpdate=true;}});this.resize();}
   reset(){
+    this.landscape.reset();
     for(const mesh of this.actors.values()){this.scene.remove(mesh);if(mesh.userData.health)this.scene.remove(mesh.userData.health);}this.actors.clear();
     for(const mesh of this.loot.values())this.scene.remove(mesh);this.loot.clear();
     for(const {group}of this.stock.values())this.scene.remove(group);this.stock.clear();
@@ -84,15 +88,15 @@ export class SnowfrontRenderer{
     this.staticRoot.add(this.mergeStatic(group));
     const path=new T.Mesh(new T.PlaneGeometry(65,3.8),new T.MeshToonMaterial({color:0xdbe5eb,gradientMap:this.gradient}));path.rotation.x=-Math.PI/2;path.position.set(0,.012,20);path.receiveShadow=true;path.userData.outlineParameters={visible:false};this.scene.add(path);
   }
-  buildCamp(s){
+  buildCamp(s,options={}){
     for(const group of [this.camp,this.gates])group.traverse(n=>{if(n.isMesh){n.geometry.dispose();if(n.material!==this.palette)n.material.dispose();}});
     this.camp.clear();this.gates.clear();this.gateLeaves=[];this.serviceLeaves=[];
-    const min=s.built.west?-20:-8,max=s.built.east?20:8;
+    const layout=campPerimeter({min:s.built.west?-20:-8,max:s.built.east?20:8,...options}),{min,max}=layout;
+    this.perimeter=layout;
     const floor=new T.Mesh(new T.BoxGeometry(max-min,.15,17),new T.MeshToonMaterial({color:0xd9b084,gradientMap:this.gradient}));floor.position.set((min+max)/2,.0,8.5);floor.receiveShadow=true;floor.userData.outlineParameters={visible:false};this.camp.add(floor);
     const pickets=new T.Group();
     const add=(x,y)=>{const p=this.model('picket');p.position.set(x,0,y);pickets.add(p);};
-    for(let x=min;x<=max;x+=.34){if(Math.abs(x)>1.5&&Math.abs(x+5)>.7)add(x,0);if(x<1.7||x>5.5)add(x,17);}
-    for(let y=0;y<=17;y+=.34){add(min,y);add(max,y);}
+    for(const p of layout.pickets)add(p.x,p.y);
     this.camp.add(this.mergeStatic(pickets));
     const gate=(x,width,service=false)=>{
       for(const side of [-1,1]){
@@ -103,7 +107,7 @@ export class SnowfrontRenderer{
         (service?this.serviceLeaves:this.gateLeaves).push({pivot,side});
       }
     };
-    gate(0,3);gate(-5,1.3,true);
+    for(const g of layout.gates)gate(g.x,g.width,g.service);
     this.campRevision=String(s.built.east)+String(s.built.west);
   }
   label(key,text,color=0xffffff){
@@ -216,9 +220,9 @@ export class SnowfrontRenderer{
   render(s,dt=.016){
     if(!this.player)return;this.visualTime+=dt;this.frameCount++;
     if(this.campRevision!==String(s.built.east)+String(s.built.west))this.buildCamp(s);
-    this.pose(this.player,s.player,dt);this.stacks(this.player,s.player.bag,s.player.cash);this.health(this.player,s.player.hp);
+    this.pose(this.player,s.player,dt);if(s.player.y<0)this.player.position.y=snowHeight(s.player.x,s.player.y);this.landscape.update(s.player);this.stacks(this.player,s.player.bag,s.player.cash);this.health(this.player,s.player.hp);
     this.player.userData.axe.scale.setScalar(s.weapon===3?1.2:1);
-    this.footRing.position.set(s.player.x,.12,s.player.y);
+    this.footRing.position.set(s.player.x,this.player.position.y+.12,s.player.y);
     const dx=(this.waypoint?.x??s.player.x)-s.player.x,dy=(this.waypoint?.y??s.player.y)-s.player.y,d=Math.hypot(dx,dy);
     this.guide.visible=d>2&&s.status==='playing'&&!s.finale;
     if(this.guide.visible){this.guide.position.set(s.player.x+dx/d*1.25,.14,s.player.y+dy/d*1.25);this.guide.rotation.set(Math.PI/2,0,-Math.atan2(dx,dy));}

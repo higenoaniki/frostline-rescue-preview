@@ -1,6 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {SnowfrontRenderer} from './snowfront-renderer.js';
 import {STORY_PADS,STORY_NAMES,storyAvailable,storyCost,storySafe} from './story-state.js';
+import {snowHeight} from './snow-landscape.js';
 
 const mix=(a,b,t)=>a+(b-a)*t;
 export class StoryRenderer extends SnowfrontRenderer{
@@ -21,8 +22,13 @@ export class StoryRenderer extends SnowfrontRenderer{
     this.catalog.set('food',this.catalog.get('roast'));this.catalog.set('kit',this.catalog.get('crate'));
     model('core',()=>{const g=new T.Group();this.part(g,new T.OctahedronGeometry(.32),0x8cfff1,0,.3,0);return g;});
     this.trader=this.actor('merchant');this.scene.add(this.trader);this.runner=this.actor('worker');this.scene.add(this.runner);
-    this.sled=this.model('sled');this.scene.add(this.sled);
+    this.makeSupplySled();
     this.holster=new T.Group();this.player.getObjectByName('torso').add(this.holster);this.holster.position.set(.42,-.1,-.15);this.holster.rotation.set(0,0,-.15);
+  }
+  makeSupplySled(){
+    this.sled=this.model('sled');
+    for(let i=0;i<4;i++){const cargo=this.model(i<2?'crate':'food');cargo.position.set(i%2*.5-.25,.65+Math.floor(i/2)*.35,0);this.sled.add(cargo);}
+    this.scene.add(this.sled);
   }
   part(group,geometry,color,x=0,y=0,z=0){const m=new T.Mesh(geometry,new T.MeshToonMaterial({color,gradientMap:this.gradient}));m.userData.procedural=!!this.buildingWorld;m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;group.add(m);return m;}
   prop(group,name,x,y,scale=1){const m=this.model(name);m.position.set(x,0,y);m.scale.setScalar(scale);group.add(m);return m;}
@@ -31,9 +37,8 @@ export class StoryRenderer extends SnowfrontRenderer{
     this.storyRoot.traverse(m=>{if(m.userData.procedural){m.geometry.dispose();m.material.dispose();}});this.storyRoot.clear();this.nodeMeshes.clear();this.beams=[];
     this.buildingWorld=true;
     this.builtSignature=JSON.stringify([s.chapter,s.built]);
-    this.buildCamp({built:{east:false,west:false}});
-    // Wider staging area for material allocation and a clear entrance aisle.
-    this.camp.scale.x=1.8;this.gates.scale.x=1;
+    this.buildCamp({built:{east:false,west:false}},{min:-14.4,max:14.4,serviceGate:false,tradeOpening:false});
+    this.camp.scale.x=1;this.gates.scale.x=1;
     this.prop(this.storyRoot,'grill',-5,3.5);this.prop(this.storyRoot,'table',-2,3.5);this.prop(this.storyRoot,'trade',5,14);this.prop(this.storyRoot,'weapon',-5,14);
     if(s.chapter!=='pass')this.prop(this.storyRoot,'weapon',-9,14,.8);
     if(s.built.forge)this.prop(this.storyRoot,'smoker',9,3.5);
@@ -99,7 +104,7 @@ export class StoryRenderer extends SnowfrontRenderer{
     const projected=mesh.position.clone().project(this.camera),y=(1-projected.y)*innerHeight/2,x=(projected.x+1)*innerWidth/2;
     const hudBottom=document.querySelector('.sf-objective')?.getBoundingClientRect().bottom??190;
     const rect={left:x-66,right:x+66,top:y-24,bottom:y+24};
-    const blocked=[...document.querySelectorAll('.sf-hud,.sf-objective,.sf-bag,.sf-tools,.sf-context:not([hidden]),.story-repair:not([hidden])')].some(el=>{const r=el.getBoundingClientRect();return rect.left<r.right&&rect.right>r.left&&rect.top<r.bottom&&rect.bottom>r.top;});
+    const blocked=[...document.querySelectorAll('.sf-hud,.sf-objective,.sf-bag,.sf-tools,.sf-context:not([hidden]),.chapter-radio:not([hidden]),.story-repair:not([hidden])')].some(el=>{const r=el.getBoundingClientRect();return rect.left<r.right&&rect.right>r.left&&rect.top<r.bottom&&rect.bottom>r.top;});
     const overlaps=(this.labelRects||[]).some(r=>rect.left<r.right+5&&rect.right>r.left-5&&rect.top<r.bottom+4&&rect.bottom>r.top-4);
     const close=Math.hypot(p.x-this.player.position.x,p.y-this.player.position.z)<9||this.waypoint&&Math.hypot(p.x-this.waypoint.x,p.y-this.waypoint.y)<1.5;
     mesh.visible=close&&!blocked&&!overlaps&&y>hudBottom+26&&y<innerHeight-115&&x>64&&x<innerWidth-64;if(mesh.visible)this.labelRects.push(rect);return mesh;
@@ -112,19 +117,20 @@ export class StoryRenderer extends SnowfrontRenderer{
   render(s,dt=.016){
     if(!this.player)return;this.visualTime+=dt;this.frameCount++;this.labelRects=[];
     if(this.builtSignature!==JSON.stringify([s.chapter,s.built]))this.buildWorld(s);
-    this.pose(this.player,s.player,dt);this.stacks(this.player,{raw:s.player.bag.raw,roast:s.player.bag.food,crate:s.player.bag.kit},s.player.cash);
+    const surface=p=>s.chapter==='pass'&&s.built.bridge&&Math.abs(p.x)<2.2&&p.y<=-8.8&&p.y>=-15.5?.32:snowHeight(p.x,p.y);
+    this.pose(this.player,s.player,dt);this.player.position.y=surface(s.player);this.landscape.update(s.player);this.stacks(this.player,{raw:Math.min(8,s.player.bag.raw),roast:Math.min(8,s.player.bag.food),crate:s.player.bag.kit},s.player.cash);
     // Distinct real 3D cargo for non-food materials; shared authored backpack rig.
     const extraKey=JSON.stringify([s.player.bag.wood,s.player.bag.ore]);
     if(this.extraKey!==extraKey){if(this.extra)this.player.getObjectByName('torso').remove(this.extra);this.extra=new T.Group();this.extra.position.set(-.4,.35,-.55);this.player.getObjectByName('torso').add(this.extra);let h=0;for(const type of ['wood','ore'])for(let i=0;i<Math.min(s.player.bag[type],12);i++){const m=this.model(type);m.position.y=h;h+=.16;this.extra.add(m);}this.extraKey=extraKey;}
     const axe=this.player.userData.axe,hand=this.player.getObjectByName('hand-right');
     if(s.player.motion){if(axe.parent!==hand){hand.add(axe);axe.position.set(0,0,0);axe.rotation.set(-.3,0,0);}}else if(axe.parent!==this.holster){this.holster.add(axe);axe.position.set(0,0,0);axe.rotation.set(.1,0,Math.PI*.08);}
-    this.health(this.player,s.player.hp);this.footRing.position.set(s.player.x,.13,s.player.y);
+    this.health(this.player,s.player.hp);this.footRing.position.set(s.player.x,this.player.position.y+.13,s.player.y);
     const follow=1-Math.exp(-dt*14);this.focus.x=mix(this.focus.x,s.player.x,follow);this.focus.z=mix(this.focus.z,s.player.y-1,follow);this.camera.position.copy(this.focus).add(new T.Vector3(21,29,29));this.camera.lookAt(this.focus);
     const open=Math.hypot(s.player.x,s.player.y)<2.6||s.survivors.some(p=>p.following&&Math.hypot(p.x,p.y)<2.6);
     for(const {pivot,side}of this.gateLeaves||[])pivot.rotation.y=mix(pivot.rotation.y,open?side*1.55:0,Math.min(1,dt*14));
     this.pose(this.trader,{x:5,y:15.5,facing:Math.PI/2,moving:false},dt);
     this.runner.visible=!!s.built.miner;this.runner.userData.axe.visible=true;this.pose(this.runner,{x:9,y:-18,facing:Math.PI,moving:false,motion:{time:this.visualTime%.9}},dt);
-    const live=new Set();const actor=(id,name,p,kind)=>{live.add(id);let m=this.actors.get(id);if(!m){m=this.actor(name);this.actors.set(id,m);this.scene.add(m);}this.pose(m,p,dt,kind);return m;};
+    const live=new Set();const actor=(id,name,p,kind)=>{live.add(id);let m=this.actors.get(id);if(!m){m=this.actor(name);this.actors.set(id,m);this.scene.add(m);}this.pose(m,p,dt,kind);m.position.y=surface(p);return m;};
     for(const e of s.enemies){
       const m=actor('enemy-'+e.id,e.kind,e,'beast');m.scale.setScalar(e.boss?1.65:1);
       if(e.boss&&!m.userData.crown){const crown=new T.Group();for(let i=0;i<3;i++){const shard=this.model('core');shard.scale.setScalar(.7);shard.position.set((i-1)*.25,.4+(i===1?.15:0),.1);crown.add(shard);}m.userData.joints.head.add(crown);m.userData.crown=crown;}
@@ -145,16 +151,18 @@ export class StoryRenderer extends SnowfrontRenderer{
       if(id==='trade')text=s.chapter==='pass'?`救助隊の補給\n食料 ${s.foodDelivered}/6`:s.chapter==='highland'?`灯台への荷箱\n${s.delivered}/8`:'補給隊\n余剰物資を換金';
       if(id==='forge'&&s.built.forge)text=`補強材工房\n木材 ${s.forgeWood} / 鉱石 ${s.forgeOre}`;
       if(id==='output'&&s.built.forge)text=`補強材回収\n${s.kitStock}`;
-      if(storyAvailable(s,id)){const cost=storyCost(s,id),paid=s.paid[id]||{};text=(['weapon','armor'].includes(id)?STORY_NAMES[id]:'未開拓の投資枠')+'\n'+Object.entries(cost).map(([k,v])=>`${{cash:'金',wood:'木',ore:'鉱',kit:'箱',core:'核'}[k]}${paid[k]||0}/${v}`).join(' ');}
+      if(storyAvailable(s,id)){const cost=storyCost(s,id),paid=s.paid[id]||{};text=(['weapon','armor'].includes(id)||id.startsWith('relay')?STORY_NAMES[id]:'未開拓の投資枠')+'\n'+Object.entries(cost).map(([k,v])=>`${{cash:'金',wood:'木',ore:'鉱',kit:'箱',core:'核'}[k]}${paid[k]||0}/${v}`).join(' ');}
       if(id==='bridge'&&s.chapter==='highland'&&!s.built.mine)text=`未開拓の投資枠\n木 ${s.paid.mine?.wood||0}/12 金 ${s.paid.mine?.cash||0}/36`;
       if(s.built[id]&&id.startsWith('relay'))text=STORY_NAMES[id]+'\n点灯済';
       let pad=this.storyPads.get(id);
       if(!pad){const points=[[-1.1,0,-.85],[1.1,0,-.85],[1.1,0,.85],[-1.1,0,.85]].map(p=>new T.Vector3(...p));pad=new T.LineLoop(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:0xf9ffff}));pad.position.set(p.x,.13,p.y);pad.userData.outlineParameters={visible:false};this.scene.add(pad);this.storyPads.set(id,pad);}
-      pad.visible=!!text&&!s.built[id];pad.material.color.setHex(storyAvailable(s,id)?0xf0d276:0xf9ffff);
+      pad.visible=!!text&&!s.built[id];pad.position.y=surface(p)+.13;pad.material.color.setHex(storyAvailable(s,id)?0xf0d276:0xf9ffff);
+      if(id.startsWith('relay')&&this.waypoint===p)pad.scale.setScalar(1+Math.sin(this.visualTime*4)*.06);
+      else pad.scale.setScalar(1);
       if(text){visible.add('story-'+id);if(['cook','food','forge','output','trade','weapon','armor','miner','guard'].includes(id))anchor.y-=2;if(id.startsWith('relay'))anchor.y-=3.3;this.labelAt(id,text,anchor,2.8);}
     }
     for(const[key,item]of this.labels)if(key.startsWith('story-')&&!key.startsWith('story-survivor-')&&!visible.has(key))item.mesh.visible=false;
-    this.sled.visible=s.chapter==='beacon';this.sled.position.set(s.convoy.x,0,s.convoy.y);if(this.sled.visible)this.health(this.sled,s.convoy.hp,180);
+    this.sled.visible=s.chapter==='beacon';this.sled.position.set(s.convoy.x,surface(s.convoy),s.convoy.y);if(this.sled.visible){this.health(this.sled,s.convoy.hp,180);this.labelAt('convoy',s.completed?'補給完了':s.convoy.started?'食料を積んだ補給隊':'補給隊 · 主灯の点灯待ち',s.convoy,3.2);}
     this.guide.visible=!!this.waypoint&&Math.hypot(this.waypoint.x-s.player.x,this.waypoint.y-s.player.y)>2;
     if(this.guide.visible){const dx=this.waypoint.x-s.player.x,dy=this.waypoint.y-s.player.y,d=Math.hypot(dx,dy);this.guide.position.set(s.player.x+dx/d*1.4,.15,s.player.y+dy/d*1.4);this.guide.rotation.set(Math.PI/2,0,-Math.atan2(dx,dy));}
     for(const beam of this.beams)beam.rotation.y=this.visualTime*.2;
@@ -163,5 +171,5 @@ export class StoryRenderer extends SnowfrontRenderer{
     const snow=this.snow.geometry.attributes.position;for(let i=0;i<snow.count;i++)snow.setY(i,(snow.getY(i)-dt*.6+15)%15);snow.needsUpdate=true;
     this.effect.render(this.scene,this.camera);
   }
-  reset(){for(const m of this.actors.values())this.releaseHealth(m);this.releaseHealth(this.sled);super.reset();this.sled=this.model('sled');this.scene.add(this.sled);this.builtSignature=null;this.extraKey=null;}
+  reset(){for(const m of this.actors.values())this.releaseHealth(m);this.releaseHealth(this.sled);super.reset();this.makeSupplySled();this.builtSignature=null;this.extraKey=null;}
 }

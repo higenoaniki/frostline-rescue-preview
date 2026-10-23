@@ -2,12 +2,24 @@ import {sweptTargets} from './melee.js';
 
 export const STORY_IDS=['pass','highland','beacon'];
 export const STORY_SPEED=8.4;
+export const STORY_MATERIAL_LIMIT=30,STORY_PROVISION_LIMIT=8;
 export const STORY_PADS={cook:{x:-5,y:6},food:{x:-2,y:6},trade:{x:5,y:12},weapon:{x:-5,y:12},armor:{x:-9,y:12},forge:{x:9,y:6},output:{x:12,y:6},miner:{x:9,y:12},bridge:{x:0,y:-7},relayA:{x:-9,y:-5},relayB:{x:9,y:-13},relayC:{x:0,y:-23},guard:{x:0,y:12}};
 export const STORY_NAMES={cook:'食料加工',food:'食料回収',trade:'補給隊',weapon:'斧の強化',armor:'防具の強化',forge:'補強材工房',output:'補強材回収',miner:'自動採掘班',bridge:'峠の橋',relayA:'中継灯・西',relayB:'中継灯・東',relayC:'灯台の主灯',guard:'護衛隊'};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),near=(a,b,r=1.25)=>dist(a,b)<r;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 export const storySafe=(s,p)=>p.y>=0&&Math.abs(p.x)<15||s.chapter==='beacon'&&['relayA','relayB','relayC'].some(id=>s.built[id]&&dist(p,STORY_PADS[id])<2.6);
 export const storyCapacity=p=>Object.values(p.bag).reduce((a,b)=>a+b,0);
+export const storyMaterialCapacity=p=>p.bag.wood+p.bag.ore+p.bag.kit;
+export const storyProvisionCapacity=p=>p.bag.raw+p.bag.food;
+export function storySupplyRows(s,id){return Object.entries(storyCost(s,id)||{}).map(([key,required])=>({key,required,paid:Math.min(required,s.paid[id]?.[key]||0),carried:Number(key==='cash'?s.player.cash:key==='core'?s.core:s.player.bag[key])||0}));}
+export function storyRepairProgress(s,id){if(s.built[id])return 1;const rows=storySupplyRows(s,id);return rows.reduce((n,r)=>n+r.paid/r.required,0)/Math.max(1,rows.length);}
+export function storyConvoyStatus(s){
+  if(s.completed)return{phase:'arrived',text:'補給隊が北岬の避難所に到着',point:s.convoy};
+  if(!s.built.relayC)return{phase:'preparing',text:'補給隊は拠点で待機中 · 主灯の修復後に出発',point:s.convoy};
+  if(dist(s.player,s.convoy)>=7)return{phase:'waiting',text:'護衛待ち · 補給隊の橇へ合流',point:s.convoy};
+  if(s.enemies.some(e=>dist(e,s.convoy)<3.2))return{phase:'blocked',text:'敵が進路を塞いでいる · 橇の周囲を制圧',point:s.convoy};
+  return{phase:'moving',text:'補給隊、移動中 · 灯台まで護衛',point:s.convoy};
+}
 const emit=(s,type,data={})=>{s.events.push({type,...data});if(s.events.length>100)s.events.shift();};
 const random=s=>{s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296;};
 export function storyMissions(s){
@@ -25,10 +37,10 @@ export function storyMissions(s){
     {title:'灯台へ、補強材8箱',text:`補強材の納品 ${s.delivered}/8`,value:s.delivered,target:8,point:()=>s.player.bag.kit?STORY_PADS.trade:s.kitStock?STORY_PADS.output:STORY_PADS.forge}
   ];
   return[
-    {title:'西の中継灯',text:'木材6・鉱石6・現金24を中継灯へ',value:Number(!!s.built.relayA),target:1,point:()=>STORY_PADS.relayA},
-    {title:'東へ、灯りをつなぐ',text:'補強材2・鉱石6・現金36を東の灯へ',value:Number(!!s.built.relayB),target:1,point:()=>s.player.bag.kit>=2?STORY_PADS.relayB:s.kitStock?STORY_PADS.output:STORY_PADS.forge},
-    {title:'氷冠獣を越えて',text:`氷核 ${s.core?1:0}/1 · 北の雪原で氷冠獣を討伐`,value:Number(s.core),target:1,point:()=>s.enemies.find(e=>e.boss)??{x:0,y:-26}},
-    {title:'灯台の主灯を修復',text:'氷核1・補強材2・現金48を主灯へ',value:Number(!!s.built.relayC),target:1,point:()=>s.player.bag.kit>=2?STORY_PADS.relayC:s.kitStock?STORY_PADS.output:STORY_PADS.forge},
+    {title:'西の中継灯を修復',text:'木材・鉱石・現金を納入して、最初の道標を灯す',value:storyRepairProgress(s,'relayA'),target:1,point:()=>STORY_PADS.relayA},
+    {title:'東の中継灯を修復',text:'補強材・鉱石・現金を納入して、北への道を開く',value:storyRepairProgress(s,'relayB'),target:1,point:()=>STORY_PADS.relayB},
+    {title:'氷冠獣から氷核を回収',text:`氷核 ${s.coreRecovered||s.core||s.paid.relayC?.core?1:0}/1 · 北の雪原の氷冠獣を討伐`,value:Number(!!(s.coreRecovered||s.core||s.paid.relayC?.core)),target:1,point:()=>s.drops.find(d=>d.type==='core')??s.enemies.find(e=>e.boss)??{x:6,y:-26}},
+    {title:'灯台の主灯を修復',text:'氷核・補強材・現金を納入し、避難所までの道を灯す',value:storyRepairProgress(s,'relayC'),target:1,point:()=>STORY_PADS.relayC},
     {title:'最後の補給隊を守る',text:`灯台への道 ${Math.floor(s.convoy.progress*100)}% · 橇HP ${Math.ceil(s.convoy.hp)}/180`,value:s.convoy.progress,target:1,point:()=>s.convoy}
   ];
 }
@@ -54,7 +66,7 @@ export function newStory(chapter,seed=9417){
   const s={version:1,chapter,seed,time:0,status:'playing',completed:false,mission:0,weapon:chapter==='pass'?1:2,armor:0,
     player:{x:0,y:7,hp:100,facing:-Math.PI/2,moving:false,bag:{wood:chapter==='beacon'?12:0,ore:chapter==='beacon'?12:0,raw:0,food:chapter==='pass'?6:0,kit:chapter==='beacon'?2:0},cash:chapter==='pass'?36:chapter==='highland'?48:96,cooldown:0,invulnerable:0,motion:null},
     built:{bridge:false,mine:chapter==='beacon',forge:chapter==='beacon',miner:false,guard:false,relayA:false,relayB:false,relayC:false},paid:{},blockedPad:null,investment:null,
-    rawStock:0,foodStock:0,forgeWood:0,forgeOre:0,kitStock:0,foodDelivered:0,delivered:0,crafted:0,rescued:0,core:false,
+    rawStock:0,foodStock:0,forgeWood:0,forgeOre:0,kitStock:0,foodDelivered:0,delivered:0,crafted:0,rescued:0,core:false,coreRecovered:false,pickupFood:true,
     work:{wood:0,ore:0,kills:0,guardKills:0},cookTimer:0,forgeTimer:0,minerTimer:0,transferTimer:0,spawnTimer:0,guardTimer:0,guardMotion:null,
     nodes:nodesFor(chapter),enemies:[],drops:[],events:[],sequence:0,finale:null,
     survivors:Array.from({length:3},(_,i)=>({id:i,x:(i-1)*4,y:-22+i*.7,following:false,home:false,hp:100,facing:0,moving:false})),
@@ -90,13 +102,13 @@ export function investStory(s,id,dt){
   for(const [key,total]of Object.entries(cost)){
     const source=key==='cash'?s.player:key==='core'?s:s.player.bag;
     const amount=Math.min(total-(paid[key]||0),Number(source[key]||0),key==='cash'?rate:3);
-    if(amount>0){source[key]-=amount;paid[key]=(paid[key]||0)+amount;emit(s,'pay',{id,amount,from:{...s.player},to:STORY_PADS[id==='mine'?'bridge':id]});}
+    if(amount>0){source[key]-=amount;paid[key]=(paid[key]||0)+amount;emit(s,key==='cash'?'pay':'transfer',{id,item:key,count:amount,amount,from:{x:s.player.x,y:s.player.y},to:STORY_PADS[id==='mine'?'bridge':id]});}
   }
   if(!Object.entries(cost).every(([key,total])=>(paid[key]||0)>=total))return false;
   if(id==='weapon'){s.weapon++;s.paid[id]={};}else if(id==='armor'){s.armor++;s.paid[id]={};}else s.built[id]=true;
   s.blockedPad=id;emit(s,'build',{id,...STORY_PADS[id==='mine'?'bridge':id]});return true;
 }
-function addDrop(s,type,amount,p){s.drops.push({id:++s.sequence,type,amount,x:p.x,y:p.y});}
+function addDrop(s,type,amount,p){const pile=type==='raw'&&s.drops.find(d=>d.type==='raw'&&dist(d,p)<2);if(pile){pile.amount+=amount;pile.age=0;}else s.drops.push({id:++s.sequence,type,amount,x:p.x,y:p.y,age:0});}
 function kill(s,e){
   s.enemies.splice(s.enemies.indexOf(e),1);s.work.kills++;s.player.cash+=e.boss?48:4;
   addDrop(s,'raw',e.boss?6:2,e);if(e.boss)addDrop(s,'core',1,e);
@@ -114,7 +126,7 @@ function combat(s,dt){
     const m=p.motion,previous=m.time;m.time+=dt;
     if(m.node){
       const n=s.nodes.find(n=>n.id===m.node);
-      if(previous<.2&&m.time>=.2&&n&&dist(n,p)<2.4&&n.remaining>0&&storyCapacity(p)<30){const count=Math.min(n.remaining,n.type==='wood'?3:2,30-storyCapacity(p));n.remaining-=count;p.bag[n.type]+=count;s.work[n.type]+=count;emit(s,'pickup',{item:n.type,count,x:n.x,y:n.y});if(!n.remaining)n.respawn=12;}
+      if(previous<.2&&m.time>=.2&&n&&dist(n,p)<2.4&&n.remaining>0&&storyMaterialCapacity(p)<STORY_MATERIAL_LIMIT){const count=Math.min(n.remaining,n.type==='wood'?3:2,STORY_MATERIAL_LIMIT-storyMaterialCapacity(p));n.remaining-=count;p.bag[n.type]+=count;s.work[n.type]+=count;emit(s,'pickup',{item:n.type,count,x:n.x,y:n.y});if(!n.remaining)n.respawn=12;}
     }else for(const e of sweptTargets({...p,range:2.3},s.enemies,m,previous)){e.hp-=[0,3,6,12][s.weapon];emit(s,'hit',{x:e.x,y:e.y});if(e.hp<=0)kill(s,e);}
     if(m.time>=.44)p.motion=null;
   }
@@ -146,14 +158,16 @@ function deposit(s,source,key,destination,destKey,n,from,to){
 function interactions(s,dt){
   const p=s.player,b=p.bag;
   for(const d of [...s.drops])if(near(p,d,1.5)){
-    if(d.type==='core'){s.core=true;s.drops.splice(s.drops.indexOf(d),1);emit(s,'pickup',{item:'core',x:d.x,y:d.y});continue;}
-    const n=Math.min(d.amount,30-storyCapacity(p));b[d.type]+=n;d.amount-=n;if(!d.amount)s.drops.splice(s.drops.indexOf(d),1);
+    if(d.type==='core'){s.core=s.coreRecovered=true;s.drops.splice(s.drops.indexOf(d),1);emit(s,'pickup',{item:'core',x:d.x,y:d.y});continue;}
+    if(d.type==='raw'&&!s.pickupFood)continue;
+    const free=d.type==='raw'?STORY_PROVISION_LIMIT-storyProvisionCapacity(p):STORY_MATERIAL_LIMIT-storyMaterialCapacity(p);
+    const n=Math.max(0,Math.min(d.amount,free));if(!n)continue;b[d.type]+=n;d.amount-=n;emit(s,'pickup',{item:d.type,count:n,x:d.x,y:d.y});if(!d.amount)s.drops.splice(s.drops.indexOf(d),1);
   }
   s.transferTimer+=dt;if(s.transferTimer<.1)return;s.transferTimer=0;s.investment=null;
   if(s.blockedPad){const pos=STORY_PADS[s.blockedPad==='mine'?'bridge':s.blockedPad];if(!near(p,pos,1.65))s.blockedPad=null;}
   for(const id of ['weapon','armor','bridge','mine','forge','miner','guard','relayA','relayB','relayC'])if(storyAvailable(s,id)&&near(p,STORY_PADS[id==='mine'?'bridge':id])){s.investment=id;investStory(s,id,.1);break;}
   if(near(p,STORY_PADS.cook))deposit(s,b,'raw',s,'rawStock',3,{...p},STORY_PADS.cook);
-  if(near(p,STORY_PADS.food))deposit(s,s,'foodStock',b,'food',Math.min(3,30-storyCapacity(p)),STORY_PADS.food,{...p});
+  if(near(p,STORY_PADS.food))deposit(s,s,'foodStock',b,'food',Math.max(0,Math.min(3,STORY_PROVISION_LIMIT-storyProvisionCapacity(p))),STORY_PADS.food,{...p});
   if(near(p,STORY_PADS.trade)){
     if(s.chapter==='pass'&&s.foodDelivered<6)deposit(s,b,'food',s,'foodDelivered',6-s.foodDelivered,{...p},STORY_PADS.trade);
     else if(s.chapter==='highland'&&s.delivered<8)deposit(s,b,'kit',s,'delivered',Math.min(2,8-s.delivered),{...p},STORY_PADS.trade);
@@ -166,7 +180,7 @@ function interactions(s,dt){
     if(s.forgeWood<8)deposit(s,b,'wood',s,'forgeWood',Math.min(2,8-s.forgeWood),{...p},STORY_PADS.forge);
     if(s.forgeOre<24)deposit(s,b,'ore',s,'forgeOre',Math.min(3,24-s.forgeOre),{...p},STORY_PADS.forge);
   }
-  if(s.built.forge&&near(p,STORY_PADS.output))deposit(s,s,'kitStock',b,'kit',Math.min(2,30-storyCapacity(p)),STORY_PADS.output,{...p});
+  if(s.built.forge&&near(p,STORY_PADS.output))deposit(s,s,'kitStock',b,'kit',Math.max(0,Math.min(2,STORY_MATERIAL_LIMIT-storyMaterialCapacity(p))),STORY_PADS.output,{...p});
 }
 function production(s,dt){
   s.cookTimer+=dt;if(s.rawStock&&s.cookTimer>=.8){s.rawStock--;s.foodStock++;s.cookTimer=0;emit(s,'cook');}
@@ -207,6 +221,7 @@ export function tickStory(s,dt,input={x:0,y:0}){
   const p=s.player,len=Math.hypot(input.x,input.y);p.moving=false;
   if(len>0)moveStoryActor(s,p,{x:p.x+input.x/len,y:p.y+input.y/len},STORY_SPEED*Math.min(1,len),dt);
   interactions(s,dt);production(s,dt);combat(s,dt);rescue(s,dt);escort(s,dt);
+  for(let i=s.drops.length-1;i>=0;i--){const d=s.drops[i];if(d.type==='raw'){d.age=(d.age||0)+dt;if(d.age>60)s.drops.splice(i,1);}}
   s.spawnTimer+=dt;const max=s.chapter==='pass'?7:s.chapter==='highland'?12:14;
   if(s.spawnTimer>2&&s.enemies.length<max&&s.drops.reduce((n,d)=>n+d.amount,0)<30){s.spawnTimer=0;spawnStoryEnemy(s);}
   if(p.hp<=0||s.convoy.hp<=0){s.status='lost';emit(s,'failure');return;}
@@ -222,8 +237,11 @@ export function storyTarget(s){
     if((cost.wood||0)-(paid.wood||0)>b.wood)return['修復用の木材を集める',nodeTarget(s,'wood')];
     if((cost.ore||0)-(paid.ore||0)>b.ore)return['修復用の鉱石を集める',nodeTarget(s,'ore')];
     if((cost.kit||0)-(paid.kit||0)>b.kit)return productionTarget(s);
+    if((cost.core||0)-(paid.core||0)>Number(s.core))return['氷核を回収する',s.drops.find(d=>d.type==='core')??s.enemies.find(e=>e.boss)??{x:6,y:-26}];
     if((cost.cash||0)-(paid.cash||0)>s.player.cash)return b.raw||b.food||b.wood>Math.max(0,(cost.wood||0)-(paid.wood||0))||b.ore>Math.max(0,(cost.ore||0)-(paid.ore||0))?['余剰物資を補給隊へ換金',STORY_PADS.trade]:['換金用の木材を集める',nodeTarget(s,'wood')];
+    return[STORY_NAMES[build]+'へ納入',STORY_PADS[build==='mine'?'bridge':build]];
   }
+  if(s.chapter==='beacon'&&s.mission===4)return[storyConvoyStatus(s).text,s.convoy];
   if(s.chapter==='highland'&&s.mission>=3&&s.player.bag.kit===0){
     if(!(s.mission===3&&!s.built.miner))return productionTarget(s);
   }
@@ -255,8 +273,11 @@ export function restoreStory(raw,chapter){
     s.weapon=clamp(Math.floor(s.weapon),1,3);s.armor=clamp(Math.floor(s.armor),0,2);s.mission=clamp(Math.floor(s.mission),0,storyMissions(s).length);
     if(!Array.isArray(s.nodes)||s.nodes.length!==12||!s.nodes.every(n=>['wood','ore'].includes(n.type)&&[n.x,n.y,n.remaining,n.respawn].every(Number.isFinite))||!Array.isArray(s.enemies)||!Array.isArray(s.survivors)||s.survivors.length!==3||!s.convoy||![s.convoy.hp,s.convoy.progress,s.convoy.x,s.convoy.y].every(Number.isFinite))return null;
     s.player.hp=clamp(s.player.hp,1,100);s.player.cash=Math.max(0,Math.floor(s.player.cash));s.player.motion=null;s.player.cooldown=0;s.player.invulnerable=1;
+    s.coreRecovered=!!(s.coreRecovered||s.core||s.paid.relayC?.core||s.built.relayC);s.pickupFood=data.pickupFood!==false;
+    const previousMission=s.mission;
+    if(chapter==='beacon')while(s.mission<storyMissions(s).length&&storyMissions(s)[s.mission].value>=1)s.mission++;
     s.completed=s.completed===true&&s.mission===storyMissions(s).length&&(chapter==='pass'?s.rescued===3:chapter==='highland'?s.delivered>=8:s.convoy.progress>=1);
-    s.status=data.status==='lost'?'lost':'playing';s.events=[];s.checkpoint=typeof data.checkpoint==='string'?data.checkpoint:saveStory(s,false);return s;
+    s.status=data.status==='lost'?'lost':'playing';s.events=[];s.checkpoint=previousMission!==s.mission?saveStory(s,false):typeof data.checkpoint==='string'?data.checkpoint:saveStory(s,false);return s;
   }catch{return null;}
 }
 export function retryStory(s){const next=restoreStory(s.checkpoint,s.chapter)??newStory(s.chapter);next.player.hp=100;next.convoy.hp=Math.max(90,next.convoy.hp);next.status='playing';return next;}

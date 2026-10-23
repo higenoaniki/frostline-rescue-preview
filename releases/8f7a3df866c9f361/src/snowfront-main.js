@@ -4,6 +4,7 @@ import{bindFloatingStick}from'./touch-controls.js';
 import{bindStageTravel,stageUrl}from'./stage-travel.js';
 import{chapterFor,completeChapter}from'./chapters.js';
 import{chapterPrelude}from'./chapter-prelude.js';
+import{ChapterNarrative}from'./chapter-narrative.js';
 import{GameAudio}from'./game-audio.js';
 import{buttonIcon,icon}from'./icons.js';
 import{facilityContext}from'./snowfront-ui.js';
@@ -32,6 +33,8 @@ const resetTouch=bindFloatingStick(document.querySelector('.shell'),input,$('sfJ
 const save=()=>{if(location.pathname.startsWith('/review/'))return;try{localStorage.setItem(SNOWFRONT_KEY,saveSnowfront(state));}catch{}};
 function stop(){resetTouch();input.keys.clear();}
 let travelWasPaused=false;const travel=bindStageTravel($('sfTravelButton'),{current:'snowfront',onOpen:()=>{travelWasPaused=paused;paused=true;stop();},onClose:()=>{paused=travelWasPaused;stop();},beforeTravel:save});
+const journalButton=document.createElement('button');journalButton.type='button';$('sfTravelButton').after(journalButton);let journalPaused=false;
+const narrative=new ChapterNarrative({root,button:journalButton,chapter:'snowfront',getMission:()=>state.mission,onOpen:()=>{journalPaused=paused;paused=true;stop();},onClose:()=>{paused=journalPaused;stop();}});
 for(const [id,name,label]of [['sfSettingsButton','settings','設定'],['sfSettingsClose','close','閉じる'],['sfPause','pause','一時停止'],['sfSound',audio.muted?'muted':'volume','サウンド']])buttonIcon($(id),name,label);
 $('sfCoinIcon').append(icon('coins',20));$('sfMissionIcon').append(icon('flag',18));$('sfTrophy').append(icon('trophy',30));$('sfInvestmentIcon').append(icon('coins',22));
 $('sfSound').onclick=()=>{audio.toggle();buttonIcon($('sfSound'),audio.muted?'muted':'volume',audio.muted?'音をオンにする':'音をオフにする');};
@@ -83,6 +86,7 @@ function target(){
   return businessTarget();
 }
 let lastHud='';function hud(){
+  narrative.update();
   const s=state,goal=MISSIONS[Math.min(s.mission,MISSIONS.length-1)],p=s.player;
   $('sfCash').textContent=p.cash;$('sfMissionTitle').textContent=s.completed?'交易路 開通':s.finale?'隊商が出発しました':goal.title;
   $('sfMissionIndex').textContent=s.completed?'CLEAR':`${Math.min(s.mission+1,6)} / 6`;
@@ -111,7 +115,7 @@ function frame(t){
   }
   for(const e of state.events.splice(0)){
     renderer.event(e);const cue={pay:'deposit',transfer:'deposit',pickup:'pickup',sell:'sell',hit:'hit',kill:'hit',build:'build',milestone:'milestone',swing:'swing',hurt:'hurt',failure:'failure',victory:'victory',launch:'launch'}[e.type];if(cue)audio.play(cue);
-    if(e.type==='milestone'){$('sfCelebrateText').textContent=e.title;bannerUntil=t+2900;save();}
+    if(e.type==='milestone'){narrative.announce(state.mission);$('sfCelebrateText').textContent=e.title;bannerUntil=t+2900;save();}
   }
   audio.setActivity({paused:paused||state.status!=='playing',hidden});audio.update({...state.player,x:state.player.x*100,y:state.player.y*100},isSafeForAudio());
   if(!hidden)renderer.render(state,paused?0:dt);hud();requestAnimationFrame(frame);

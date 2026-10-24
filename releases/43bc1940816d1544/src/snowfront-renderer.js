@@ -1,7 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader}from'./vendor/GLTFLoader.js';
 import {clone as cloneSkeleton}from'./vendor/SkeletonUtils.js';
-import {OutlineEffect}from'./vendor/OutlineEffect.js';
 import {canonicalizeProductionRig}from'./production-rig.js';
 import {mergeGeometries}from'./vendor/BufferGeometryUtils.js';
 import {PADS,BUILD_COST,investmentCost,buildAvailable,isSafe}from'./snowfront-state.js';
@@ -10,6 +9,9 @@ import {SnowLandscape,snowHeight} from './snow-landscape.js';
 import {hudOverlaps} from './world-labels.js';
 import {createGameRenderer} from './webgl-context.js';
 import {readDisplayMode} from './display-settings.js';
+import {paintedMaterial,softStudioLight} from './painted-material.js';
+import {interactionPad} from './interaction-pad.js';
+import {productionMaterials,bindCharacterFace,setFaceBlink} from './character-face.js';
 
 const lerp=(a,b,t)=>a+(b-a)*t;
 const names={raw:'獲物を投入',roast:'焼き肉回収',sale:'販売・納品',cash:'売上回収',weapon:'斧を強化',east:'東区画',west:'西区画',smoker:'燻製工房',smoked:'荷箱回収',collector:'回収人',hunter:'自動狩り台',porter:'運搬係'};
@@ -20,15 +22,14 @@ export class SnowfrontRenderer{
     this.renderer=createGameRenderer(canvas,T.WebGLRenderer,{reduced:readDisplayMode()==='low'});
     this.quality=this.renderer.userData.gpuFallback?'low':readDisplayMode();
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.NeutralToneMapping;this.renderer.toneMappingExposure=1;
-    this.renderer.shadowMap.enabled=this.quality!=='low';this.renderer.shadowMap.type=T.PCFShadowMap;
-    this.effect=new OutlineEffect(this.renderer,{defaultThickness:.0017,defaultColor:[.25,.29,.32],defaultAlpha:.65});
+    this.renderer.shadowMap.enabled=this.quality!=='low';softStudioLight(this.scene,this.renderer);
+    this.effect={enabled:true,render:(scene,camera)=>this.renderer.render(scene,camera)};
     this.camera=new T.OrthographicCamera(-15,15,15,-15,.1,150);this.focus=new T.Vector3(0,0,6);this.visualTime=0;this.frameCount=0;
-    this.scene.add(new T.HemisphereLight(0xf3f8ff,0xb5bec9,1.2));
-    this.sun=new T.DirectionalLight(0xfffaf1,1.7);this.sun.position.set(-15,30,-8);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-35,right:35,top:38,bottom:-38,near:.5,far:90});this.sun.shadow.bias=-.00015;this.sun.shadow.normalBias=.055;this.scene.add(this.sun);
-    const shades=new Uint8Array([150,185,217,240,255]);this.gradient=new T.DataTexture(shades,5,1,T.RedFormat);this.gradient.minFilter=this.gradient.magFilter=T.NearestFilter;this.gradient.needsUpdate=true;
-    this.palette=new T.MeshToonMaterial({vertexColors:true,gradientMap:this.gradient});this.catalog=new Map();this.actors=new Map();this.loot=new Map();this.labels=new Map();this.facilities=new Map();this.stock=new Map();this.transfers=[];this.particles=[];
+    this.scene.add(new T.HemisphereLight(0xe8f3ff,0x879b97,2.1));
+    this.sun=new T.DirectionalLight(0xffedcf,3.4);this.sun.position.set(-15,30,-8);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-35,right:35,top:38,bottom:-38,near:.5,far:90});this.sun.shadow.bias=-.00015;this.sun.shadow.normalBias=.035;this.scene.add(this.sun);
+    this.palette=paintedMaterial();this.catalog=new Map();this.actors=new Map();this.loot=new Map();this.labels=new Map();this.facilities=new Map();this.stock=new Map();this.transfers=[];this.particles=[];
     this.staticRoot=new T.Group();this.camp=new T.Group();this.gates=new T.Group();this.scene.add(this.staticRoot,this.camp,this.gates);
-    this.groundMat=new T.MeshToonMaterial({color:0xf0f3f5,gradientMap:this.gradient});
+    this.groundMat=paintedMaterial({color:0xf0f3f5,vertexColors:false,roughness:.94});
     const ground=new T.Mesh(new T.PlaneGeometry(160,160),this.groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;ground.userData.outlineParameters={visible:false};this.scene.add(ground);
     ground.rotation.x=0;this.landscape=new SnowLandscape(this.scene,ground);
     this.footRing=new T.Mesh(new T.RingGeometry(.55,.65,48),new T.MeshBasicMaterial({color:0x49c4bd,transparent:true,opacity:.7,depthWrite:false}));this.footRing.rotation.x=-Math.PI/2;this.footRing.userData.outlineParameters={visible:false};this.scene.add(this.footRing);
@@ -43,7 +44,7 @@ export class SnowfrontRenderer{
       if(!root.userData.asset)continue;
       let skinned=false;root.traverse(n=>{if(n.isBone)n.name=n.name.replace(/[_.]\d+$/,'');if(n.isSkinnedMesh)skinned=true;});
       if(skinned)canonicalizeProductionRig(root);
-      root.traverse(n=>{if(n.isMesh){n.material=this.palette;n.castShadow=n.receiveShadow=true;}});this.catalog.set(root.userData.asset.replace('snowfront-',''),root);
+      root.traverse(n=>{if(n.isMesh){productionMaterials(n,this.palette);n.castShadow=n.receiveShadow=true;}});this.catalog.set(root.userData.asset.replace('snowfront-',''),root);
     }
     this.player=this.actor('player');this.scene.add(this.player);this.chef=this.actor('chef');this.chef.position.set(-4,0,1.7);this.scene.add(this.chef);
     this.trader=this.actor('merchant');this.scene.add(this.trader);
@@ -55,6 +56,7 @@ export class SnowfrontRenderer{
   model(name){const source=this.catalog.get(name);if(!source)throw Error('Missing snowfront asset: '+name);return source.clone(true);}
   actor(name){
     const source=this.catalog.get(name);if(!source)throw Error('Missing snowfront actor: '+name);const root=cloneSkeleton(source);
+    bindCharacterFace(root);
     root.userData.joints={};root.traverse(n=>{if(n.isBone)root.userData.joints[n.name]=n;});
     root.userData.clock=0;root.userData.stack=new T.Group();root.getObjectByName('torso').add(root.userData.stack);root.userData.stack.position.set(0,.38,-.52);
     if(['player','worker','merchant','chef'].includes(name)){
@@ -90,14 +92,14 @@ export class SnowfrontRenderer{
     }
     for(let i=0;i<18;i++){const rock=this.model('rock');rock.position.set(Math.sin(i*9.3)*23,0,-3-(i%9)*3);rock.rotation.y=i;rock.scale.setScalar(.5+(i%3)*.2);group.add(rock);}
     this.staticRoot.add(this.mergeStatic(group));
-    const path=new T.Mesh(new T.PlaneGeometry(65,3.8),new T.MeshToonMaterial({color:0xdbe5eb,gradientMap:this.gradient}));path.rotation.x=-Math.PI/2;path.position.set(0,.012,20);path.receiveShadow=true;path.userData.outlineParameters={visible:false};this.scene.add(path);
+    const path=new T.Mesh(new T.PlaneGeometry(65,3.8),paintedMaterial({color:0xdbe5eb,vertexColors:false}));path.rotation.x=-Math.PI/2;path.position.set(0,.012,20);path.receiveShadow=true;path.userData.outlineParameters={visible:false};this.scene.add(path);
   }
   buildCamp(s,options={}){
     for(const group of [this.camp,this.gates])group.traverse(n=>{if(n.isMesh){n.geometry.dispose();if(n.material!==this.palette)n.material.dispose();}});
     this.camp.clear();this.gates.clear();this.gateLeaves=[];this.serviceLeaves=[];
     const layout=campPerimeter({min:s.built.west?-20:-8,max:s.built.east?20:8,...options}),{min,max}=layout;
     this.perimeter=layout;
-    const floor=new T.Mesh(new T.BoxGeometry(max-min,.15,17),new T.MeshToonMaterial({color:0xd9b084,gradientMap:this.gradient}));floor.position.set((min+max)/2,.0,8.5);floor.receiveShadow=true;floor.userData.outlineParameters={visible:false};this.camp.add(floor);
+    const floor=new T.Mesh(new T.BoxGeometry(max-min,.15,17),paintedMaterial({color:0xd9b084,vertexColors:false,roughness:.9}));floor.position.set((min+max)/2,.0,8.5);floor.receiveShadow=true;floor.userData.outlineParameters={visible:false};this.camp.add(floor);
     const pickets=new T.Group();
     const add=(x,y)=>{const p=this.model('picket');p.position.set(x,0,y);pickets.add(p);};
     for(const p of layout.pickets)add(p.x,p.y);
@@ -105,9 +107,9 @@ export class SnowfrontRenderer{
     const gate=(x,width,service=false)=>{
       for(const side of [-1,1]){
         const pivot=new T.Group();pivot.position.set(x+side*width/2,0,0);this.gates.add(pivot);
-        const geometry=new T.BoxGeometry(width/2-.03,1.12,.12),mat=new T.MeshToonMaterial({color:service?0x6996a0:0xbf6e40,gradientMap:this.gradient});
+        const geometry=new T.BoxGeometry(width/2-.03,1.12,.12),mat=paintedMaterial({color:service?0x6996a0:0xbf6e40,vertexColors:false});
         const panel=new T.Mesh(geometry,mat);panel.position.set(-side*width/4,.58,0);panel.castShadow=true;pivot.add(panel);
-        const rail=new T.Mesh(new T.BoxGeometry(width/2,.09,.17),new T.MeshToonMaterial({color:0xe9bd67,gradientMap:this.gradient}));rail.position.copy(panel.position);rail.position.y=1.15;pivot.add(rail);
+        const rail=new T.Mesh(new T.BoxGeometry(width/2,.09,.17),paintedMaterial({color:0xe9bd67,vertexColors:false}));rail.position.copy(panel.position);rail.position.y=1.15;pivot.add(rail);
         (service?this.serviceLeaves:this.gateLeaves).push({pivot,side});
       }
     };
@@ -153,7 +155,7 @@ export class SnowfrontRenderer{
       const close=Math.hypot(p.x-s.player.x,p.y-s.player.y)<1.7||(['sale','cash'].includes(key)&&Math.hypot(PADS.sale.x-s.player.x,PADS.sale.y-s.player.y)<1.7);
       mesh.visible=visible&&!close&&sx>70&&sx<innerWidth-70&&sy>uiBottom&&sy<innerHeight-115&&screen.z>-1&&screen.z<1;
       let pad=this.labels.get(key).pad;
-      if(!pad){pad=new T.Mesh(new T.RingGeometry(.72,.8,4,1,Math.PI/4),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85,depthWrite:false}));pad.rotation.x=-Math.PI/2;pad.userData.outlineParameters={visible:false};this.scene.add(pad);this.labels.get(key).pad=pad;}
+      if(!pad){pad=interactionPad(['roast','smoked','cash'].includes(key)?'output':key==='sale'?'market':'input');this.scene.add(pad);this.labels.get(key).pad=pad;}
       pad.position.set(p.x,.11,p.y);pad.visible=visible;
     }
     for(const id of ['smoker','collector','hunter','porter']){
@@ -169,6 +171,8 @@ export class SnowfrontRenderer{
     else root.rotation.y+=Math.atan2(Math.sin(desired-root.rotation.y),Math.cos(desired-root.rotation.y))*Math.min(1,dt*15);
     root.position.y=p.moving?Math.abs(Math.sin(clock))*.055:Math.sin(clock)*.012;
     if(kind==='human'){
+      root.userData.faceClock=(root.userData.faceClock??0)+dt;
+      const blink=(root.userData.faceClock+root.id*.17)%4.3;setFaceBlink(root,blink<.17?Math.sin(blink/.17*Math.PI):0);
       for(const side of ['left','right']){
         const swing=p.moving?Math.sin(clock)*(side==='left'?1:-1)*.8:0;
         j['leg-'+side].rotation.x=swing;j['shin-'+side].rotation.x=Math.max(0,-swing)*.55;
@@ -259,5 +263,5 @@ export class SnowfrontRenderer{
     for(const {mesh}of this.labels.values())if(mesh.visible){const q=mesh.position.clone().project(this.camera);if(hudOverlaps((q.x+1)*innerWidth/2,(1-q.y)*innerHeight/2))mesh.visible=false;}
     this.effect.render(this.scene,this.camera);
   }
-  info(){return{revision:'snowfront-v1',frames:this.frameCount,draws:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,actors:this.actors.size,canvas:[this.canvas.width,this.canvas.height]};}
+  info(){return{revision:'snowfront-production-v3',frames:this.frameCount,draws:this.renderer.info.render.calls,triangles:this.renderer.info.render.triangles,actors:this.actors.size,canvas:[this.canvas.width,this.canvas.height]};}
 }

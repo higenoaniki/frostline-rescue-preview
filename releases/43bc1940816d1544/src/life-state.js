@@ -1,6 +1,8 @@
 import {PLAYER_WORLD_SPEED} from './player-movement.js';
 import {LIFE_STAGES,LIFE_PADS,LIFE_DEPOT,RECIPES,ITEM_PRICE,LIFE_ITEMS,facilityOrder} from './life-config.js';
-import {newLifeWorker,tickLifeWorkers} from './life-logistics.js';
+import {insideRect} from './walkways.js';
+import {newLifeWorker,tickLifeWorkers,lifeObstacles} from './life-logistics.js';
+import {insidePad} from './interaction-pad.js';
 
 export const LIFE_CAPACITY=36,WATER_CAPACITY=8;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),near=(a,b,r=1.25)=>dist(a,b)<r;
@@ -14,7 +16,7 @@ function nodeSet(config){
 }
 export function newLife(stage,previous=null){
   const c=LIFE_STAGES[stage];if(!c)throw Error('Unknown life stage');
-  const s={version:1,design:2,stage,theme:c.theme,status:'playing',completed:false,mission:0,time:0,tool:c.built.includes('tool')?2:1,
+  const s={version:1,design:2,layoutRevision:3,objectivesRevision:3,automation:{delivered:0,produced:0,shipped:0},stage,theme:c.theme,status:'playing',completed:false,mission:0,time:0,tool:c.built.includes('tool')?2:1,
     player:{x:0,y:2,hp:100,energy:100,facing:-Math.PI/2,moving:false,motion:null,bag:Object.fromEntries(Object.keys(LIFE_ITEMS).map(k=>[k,0])),cash:c.cash},
     built:Object.fromEntries(facilityOrder(c).map(k=>[k,c.built.includes(k)])),paid:{},blockedPad:null,investment:null,
     nodes:nodeSet(c),machines:{},caught:0,watered:0,gathered:Object.fromEntries(c.resources.map(k=>[k,0])),crafted:{},sold:{},saleType:c.sell,autoSale:true,automationEnabled:true,
@@ -32,16 +34,20 @@ export function inheritLife(s,previous,cargo=false){
   return s;
 }
 export function loadLifeStage(storage,stage,{restart=false}={}){
-  const read=id=>restoreLife(storage.getItem(`frostline-life-${id}-v2`),id)??restoreLife(storage.getItem(`frostline-life-${id}-v1`),id);
+  const read=id=>{for(const v of [3,2,1]){const state=restoreLife(storage.getItem(`frostline-life-${id}-v${v}`),id);if(state)return state;}return null;};
   let own=null,previous=null;try{if(!restart)own=read(stage);const stages=Object.keys(LIFE_STAGES),index=stages.indexOf(stage);for(let i=index-1;i>=0&&LIFE_STAGES[stages[i]].theme===LIFE_STAGES[stage].theme;i--){const p=read(stages[i]);if(p?.completed){previous=p;break;}}}catch{}
   return own?inheritLife(own,previous):newLife(stage,previous);
 }
-export function startLifeInvestment(s,id){if(s.status==='playing'&&!s.player.moving&&!s.built[id]&&s.blockedPad!==id&&LIFE_STAGES[s.stage].plots[id]&&near(s.player,LIFE_PADS[id],1.4)&&s.player.cash>0){s.investmentActive=id;return true;}return false;}
+export function startLifeInvestment(s,id){if(s.status==='playing'&&!s.player.moving&&!s.built[id]&&s.blockedPad!==id&&LIFE_STAGES[s.stage].plots[id]&&insidePad(s.player,LIFE_PADS[id],'investment')&&s.player.cash>0){s.investmentActive=id;return true;}return false;}
 export function validLifePosition(s,p){
   if(Math.abs(p.x)>15||p.y>17||p.y< -18)return false;
   if(s.theme==='coast'&&p.y< -4.4&&![-9,-3,3,9].some(x=>Math.abs(p.x-x)<1.45))return false;
-  if(s.built.line&&p.x> -11.1&&p.x< -9.9&&p.y>6.8&&p.y<15)return false;
-  return !Object.entries(s.built).some(([id,built])=>built&&s.machines[id]&&dist(p,{x:LIFE_PADS[id].x,y:LIFE_PADS[id].y+2.3})<1.45);
+  return !lifeObstacles(s).some(r=>insideRect(p,r));
+}
+function recoverPosition(s,actor){
+  if(validLifePosition(s,actor))return;
+  for(let radius=.25;radius<=5;radius+=.25)for(let i=0;i<24;i++){const point={x:actor.x+Math.cos(i*Math.PI/12)*radius,y:actor.y+Math.sin(i*Math.PI/12)*radius};if(validLifePosition(s,point)){Object.assign(actor,point);return;}}
+  Object.assign(actor,{x:0,y:2});
 }
 export function moveLife(s,p,target,speed,dt){
   const dx=target.x-p.x,dy=target.y-p.y,d=Math.hypot(dx,dy);p.moving=d>.06;if(!p.moving)return true;p.facing=Math.atan2(dy,dx);
@@ -83,30 +89,30 @@ function resourceGrowth(s,dt){
 }
 export function sellLife(s,type,count=2,source=s.player.bag){
   if(!ITEM_PRICE[type]||!(source[type]>0))return 0;
-  const n=Math.min(source[type],count);source[type]-=n;s.sold[type]=(s.sold[type]||0)+n;s.player.cash+=n*ITEM_PRICE[type];emit(s,'sell',{item:type,count:n,x:LIFE_PADS.market.x,y:LIFE_PADS.market.y});return n;
+  const n=Math.min(source[type],count);source[type]-=n;s.sold[type]=(s.sold[type]||0)+n;s.player.cash+=n*ITEM_PRICE[type];if(type==='can'&&s.built.line)s.automation.shipped+=n;emit(s,'sell',{item:type,count:n,x:LIFE_PADS.market.x,y:LIFE_PADS.market.y});return n;
 }
 function recipeFor(id){return Object.values(RECIPES).find(r=>r.facility===id);}
 export function lifeOutputPad(id){return{x:LIFE_PADS[id].x+(LIFE_PADS[id].x<0?2.3:-2.3),y:LIFE_PADS[id].y};}
 function transfer(s,from,key,to,n,fromPoint,toPoint){n=Math.max(0,Math.min(from[key]||0,n));if(!n)return;from[key]-=n;to[key]=(to[key]||0)+n;emit(s,'transfer',{item:key,count:n,from:fromPoint,to:toPoint});}
 function industry(s,dt){
   s.transferTimer+=dt;const pulse=s.transferTimer>=.12;if(pulse)s.transferTimer=0;
-  s.investment=Object.keys(LIFE_STAGES[s.stage].plots).find(id=>!s.built[id]&&near(s.player,LIFE_PADS[id],1.4))??null;
+  s.investment=Object.keys(LIFE_STAGES[s.stage].plots).find(id=>!s.built[id]&&insidePad(s.player,LIFE_PADS[id],'investment'))??null;
   if(s.player.moving||s.investmentActive!==s.investment)s.investmentActive=null;
   if(s.blockedPad&&!near(s.player,LIFE_PADS[s.blockedPad],1.65))s.blockedPad=null;
   if(pulse&&!s.player.moving){
     if(s.investmentActive){investLife(s,s.investmentActive,.12);if(!s.player.cash)s.investmentActive=null;}
-    if(near(s.player,LIFE_PADS.market,1.5))sellLife(s,s.saleType);
-    if(near(s.player,LIFE_DEPOT,1.6))for(const key of Object.keys(s.store))transfer(s,s.store,key,s.player.bag,LIFE_CAPACITY-lifeCargo(s),LIFE_DEPOT,s.player);
+    if(insidePad(s.player,LIFE_PADS.market,'market'))sellLife(s,s.saleType);
+    if(insidePad(s.player,LIFE_DEPOT))for(const key of Object.keys(s.store))transfer(s,s.store,key,s.player.bag,LIFE_CAPACITY-lifeCargo(s),LIFE_DEPOT,s.player);
   }
   for(const [id,m]of Object.entries(s.machines)){
     if(!s.built[id])continue;const recipe=recipeFor(id);
-    if(pulse&&!s.player.moving&&near(s.player,LIFE_PADS[id],1.3))for(const key of Object.keys(recipe.input))transfer(s,s.player.bag,key,m.input,Math.max(0,96-(m.input[key]||0)),s.player,LIFE_PADS[id]);
-    if(pulse&&near(s.player,lifeOutputPad(id),1.1)&&m.stock){const n=collect(s,recipe.output,Math.min(2,m.stock));m.stock-=n;if(n)emit(s,'pickup',{item:recipe.output,count:n,x:s.player.x,y:s.player.y});}
-    if(Object.entries(recipe.input).every(([key,n])=>(m.input[key]||0)>=n)&&m.stock<16){m.time+=dt;if(m.time>=recipe.seconds){m.time=0;for(const [key,n]of Object.entries(recipe.input))m.input[key]-=n;m.stock++;s.crafted[recipe.output]=(s.crafted[recipe.output]||0)+1;emit(s,'cook',{x:LIFE_PADS[id].x,y:LIFE_PADS[id].y});}}
+    if(pulse&&!s.player.moving&&insidePad(s.player,LIFE_PADS[id]))for(const key of Object.keys(recipe.input))transfer(s,s.player.bag,key,m.input,Math.max(0,96-(m.input[key]||0)),s.player,LIFE_PADS[id]);
+    if(pulse&&insidePad(s.player,lifeOutputPad(id),'output')&&m.stock){const n=collect(s,recipe.output,Math.min(2,m.stock));m.stock-=n;if(n)emit(s,'pickup',{item:recipe.output,count:n,x:s.player.x,y:s.player.y});}
+    if(Object.entries(recipe.input).every(([key,n])=>(m.input[key]||0)>=n)&&m.stock<16){m.time+=dt;if(m.time>=recipe.seconds){m.time=0;for(const [key,n]of Object.entries(recipe.input))m.input[key]-=n;m.stock++;s.crafted[recipe.output]=(s.crafted[recipe.output]||0)+1;if(recipe.output==='can'&&s.built.line)s.automation.produced++;emit(s,'cook',{x:LIFE_PADS[id].x,y:LIFE_PADS[id].y});}}
     else m.time=0;
   }
   for(const parcel of s.conveyor)parcel.progress+=dt/4.5;
-  const arrived=s.conveyor.filter(p=>p.progress>=1);if(arrived.length&&s.machines.canner){s.machines.canner.input.fillet=(s.machines.canner.input.fillet||0)+arrived.length;s.conveyor=s.conveyor.filter(p=>p.progress<1);}
+  const arrived=s.conveyor.filter(p=>p.progress>=1);if(arrived.length&&s.machines.canner){s.machines.canner.input.fillet=(s.machines.canner.input.fillet||0)+arrived.length;s.automation.delivered+=arrived.length;s.conveyor=s.conveyor.filter(p=>p.progress<1);}
   if(s.built.line&&s.machines.processor?.stock&&s.built.canner&&(s.machines.canner.input.fillet||0)+s.conveyor.length<16&&pulse&&s.conveyor.length<6){s.machines.processor.stock--;s.conveyor.push({progress:0});}
 }
 function automation(s,dt){
@@ -117,6 +123,16 @@ export function lifeTarget(s){
   if(goal.metric.startsWith('built.')){const id=goal.metric.split('.')[1],cost=LIFE_STAGES[s.stage].plots[id]-(s.paid[id]||0);if(s.player.cash<cost)return s.player.bag[s.saleType]?['市場で余剰を売って投資資金に',LIFE_PADS.market]:productionTarget(s,s.saleType);return[goal.title,LIFE_PADS[id]];}
   if(goal.metric.startsWith('sold.')){const type=goal.metric.split('.')[1];if(s.player.bag[type])return[goal.title,LIFE_PADS.market];return productionTarget(s,type);}
   if(goal.metric.startsWith('crafted.'))return productionTarget(s,goal.metric.split('.')[1]);
+  if(goal.metric.startsWith('automation.')){
+    if(s.saleType!=='can')return['市場で納入品を缶詰へ切り替える',LIFE_PADS.market];
+    if(goal.metric==='automation.shipped'&&s.player.bag.can)return[goal.title,LIFE_PADS.market];
+    if(goal.metric==='automation.delivered'){
+      if(s.player.bag.fish)return['魚を投入してラインを回す',LIFE_PADS.processor];
+      if((s.machines.processor.input.fish||0)>0||s.conveyor.length)return['搬送中 · 缶詰用の海藻を補給',s.player.bag.kelp?LIFE_PADS.canner:s.nodes.find(n=>n.type==='kelp')??LIFE_DEPOT];
+      return productionTarget(s,'fish');
+    }
+    return productionTarget(s,goal.metric==='automation.delivered'?'fillet':'can');
+  }
   if(goal.metric==='watered'&&!s.player.bag.water)return['川の井戸で水をくむ',LIFE_PADS.water];
   const node=s.nodes.find(n=>n.type===goal.point&&(s.theme==='coast'||n.stock>0||!n.watered));
   if(s.theme==='farm'&&node&&!node.watered&&!s.player.bag.water)return['井戸で水をくむ',LIFE_PADS.water];
@@ -138,7 +154,7 @@ export function tickLife(s,dt,input={x:0,y:0}){
   const resting=near(s.player,LIFE_PADS.market,2)||near(s.player,LIFE_PADS.water,2);s.player.energy=Math.min(100,s.player.energy+dt*(resting?10:s.player.moving?.4:.9));
   resourceGrowth(s,dt);gather(s,dt);industry(s,dt);automation(s,dt);
   const goal=lifeGoals(s)[s.mission];
-  if(goal&&goal.value>=goal.target){s.mission++;const next=lifeGoals(s)[s.mission];if(s.autoSale&&(next?.metric.startsWith('sold.')||next?.metric.startsWith('crafted.')))s.saleType=next.metric.split('.')[1];emit(s,'milestone',{title:goal.title});s.checkpoint=saveLife(s,false);}
+  if(goal&&goal.value>=goal.target){s.mission++;const next=lifeGoals(s)[s.mission];if(s.autoSale&&(next?.metric.startsWith('sold.')||next?.metric.startsWith('crafted.')))s.saleType=next.metric.split('.')[1];if(s.autoSale&&next?.metric.startsWith('automation.'))s.saleType='can';emit(s,'milestone',{title:goal.title});s.checkpoint=saveLife(s,false);}
   if(s.mission>=LIFE_STAGES[s.stage].goals.length&&!s.completed){s.completed=true;s.status='won';emit(s,'victory');s.checkpoint=saveLife(s,false);}
 }
 export function saveLife(s,checkpoint=true){const{events,checkpoint:point,...data}=s;return JSON.stringify({...data,investmentActive:null,player:{...s.player,motion:null,moving:false},...(checkpoint?{checkpoint:point}:{})});}
@@ -162,6 +178,11 @@ export function restoreLife(raw,stage){try{
   if(!s.machines||Object.keys(s.machines).length!==machineIds.length||!machineIds.every(id=>s.machines[id]?.recipe===recipeFor(id).output)||!s.worker||![s.worker.x,s.worker.y].every(Number.isFinite)||![s.worker.load,s.time,s.caught,s.watered].every(v=>Number.isFinite(v)&&v>=0)||!['coast','farm'].includes(s.theme))return null;
   if(s.nodes.length!==expectedNodes.length||!expectedNodes.every(id=>s.nodes.some(n=>n.id===id))||![s.gathered,s.crafted,s.sold,s.store].every(x=>x&&Object.values(x).every(v=>Number.isFinite(v)&&v>=0)))return null;
   if(!Array.isArray(s.conveyor)||!s.conveyor.every(p=>Number.isFinite(p.progress)&&p.progress>=0&&p.progress<=1.1)||!['worker','fisher','harvester'].every(id=>[s[id].x,s[id].y,s[id].load,s[id].timer].every(Number.isFinite)))return null;
-  s.completed=d.completed===true&&s.mission===c.goals.length&&lifeGoals(s).every(g=>g.value>=g.target);s.status='playing';s.player.motion=null;s.player.moving=false;s.events=[];s.checkpoint=typeof d.checkpoint==='string'?d.checkpoint:saveLife(s,false);return s;
+  const legacyClear=stage==='cannery'&&d.objectivesRevision!==3&&d.completed===true&&d.mission===5&&s.built.line&&s.built.canner&&s.crafted.can>=6&&s.sold.can>=8&&s.gathered.kelp>=6;
+  if(legacyClear)s.mission=c.goals.length;
+  if(!s.automation||!['delivered','produced','shipped'].every(k=>Number.isFinite(s.automation[k])&&s.automation[k]>=0))return null;
+  s.completed=d.completed===true&&s.mission===c.goals.length&&(legacyClear||d.legacyAutomationClear===true||lifeGoals(s).every(g=>g.value>=g.target));s.legacyAutomationClear=legacyClear||d.legacyAutomationClear===true;s.objectivesRevision=3;s.layoutRevision=3;s.status='playing';s.player.motion=null;s.player.moving=false;s.events=[];
+  recoverPosition(s,s.player);for(const id of ['worker','fisher','harvester']){recoverPosition(s,s[id]);s[id].route=[];s[id].routeKey=null;}
+  s.checkpoint=typeof d.checkpoint==='string'?d.checkpoint:saveLife(s,false);return s;
 }catch{return null;}}
 export function retryLife(s){return restoreLife(s.checkpoint,s.stage)??newLife(s.stage);}

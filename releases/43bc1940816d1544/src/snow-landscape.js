@@ -36,10 +36,10 @@ export class SnowLandscape{
     this.scene=scene;this.ground=ground;ground.geometry.dispose();ground.geometry=snowGroundGeometry();
     ground.material.map=snowSurfaceMap();ground.material.vertexColors=true;softenSnowMaterial(ground.material);ground.material.needsUpdate=true;
     this.root=new T.Group();scene.add(this.root);this.steps=0;this.last=null;
-    const bankMat=softenSnowMaterial(new T.MeshToonMaterial({color:0xf1f7fb,map:snowSurfaceMap(2),gradientMap:ground.material.gradientMap}));
+    const bankMat=softenSnowMaterial(new T.MeshStandardMaterial({color:0xf1f7fb,map:snowSurfaceMap(2),roughness:.94}));
     const bankGeo=bankGeometry(7,14,1.3);
     for(let i=0;i<14;i++){const bank=new T.Mesh(bankGeo,bankMat);bank.position.set((i%2?1:-1)*(28+Math.sin(i*5)*2),0,-33+Math.floor(i/2)*8);bank.rotation.y=(i%3-.7)*.16;bank.castShadow=bank.receiveShadow=true;bank.userData.outlineParameters={visible:false};this.root.add(bank);}
-    const iceMat=new T.MeshToonMaterial({color:0xb5d6df});
+    const iceMat=new T.MeshStandardMaterial({color:0xb5d6df,roughness:.42});
     for(let i=0;i<10;i++){
       const ridge=new T.Mesh(bankGeometry(4.5,8,2.1),iceMat);ridge.position.set((i%2?1:-1)*(32+i%3),-.4,-29+Math.floor(i/2)*9);ridge.receiveShadow=true;this.root.add(ridge);
       const cap=new T.Mesh(bankGeometry(4.8,8.4,2),bankMat);cap.position.copy(ridge.position);cap.position.y+=.24;cap.receiveShadow=true;cap.userData.outlineParameters={visible:false};this.root.add(cap);

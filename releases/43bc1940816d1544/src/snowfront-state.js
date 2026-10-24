@@ -1,5 +1,6 @@
 import {sweptTargets} from './melee.js';
 import {PLAYER_WORLD_SPEED} from './player-movement.js';
+import {insidePad} from './interaction-pad.js';
 
 export const SNOWFRONT_KEY='frostline-snowfront-v1';
 export const SNOWFRONT_SPEED=PLAYER_WORLD_SPEED;
@@ -32,7 +33,7 @@ export function buildAvailable(s,id){
   return false;
 }
 export function investmentCost(s,id){return id==='weapon'?(s.weapon===1?24:54):BUILD_COST[id]??0;}
-export function investmentPad(s){return ['weapon',...Object.keys(BUILD_COST)].find(id=>!s.built[id]&&buildAvailable(s,id)&&near(s.player,PADS[id]));}
+export function investmentPad(s){return ['weapon',...Object.keys(BUILD_COST)].find(id=>!s.built[id]&&buildAvailable(s,id)&&insidePad(s.player,PADS[id],'investment'));}
 export function startSnowfrontInvestment(s,id){
   if(s.status!=='playing'||s.player.moving||investmentPad(s)!==id||s.blockedPad===id||s.player.cash<=0)return false;
   s.investmentActive=id;return true;
@@ -209,18 +210,18 @@ function trading(s,dt){
 function interaction(s,dt){
   const p=s.player,b=p.bag;s.transferTimer+=dt;
   if(s.transferTimer<.09)return;s.transferTimer=0;
-  if(near(p,PADS.raw))transfer(s,b,'raw',s,'rawStock',3,p,PADS.raw);
-  if(near(p,PADS.roast)&&bagCount(p)<30)transfer(s,s,'roastStock',b,'roast',Math.min(3,30-bagCount(p)),PADS.roast,p);
-  if(near(p,PADS.sale)){
+  if(insidePad(p,PADS.raw))transfer(s,b,'raw',s,'rawStock',3,p,PADS.raw);
+  if(insidePad(p,PADS.roast,'output')&&bagCount(p)<30)transfer(s,s,'roastStock',b,'roast',Math.min(3,30-bagCount(p)),PADS.roast,p);
+  if(insidePad(p,PADS.sale,'market')){
     if(b.crate>0&&s.delivered<8)transfer(s,b,'crate',s,'delivered',1,p,PADS.sale);
     else if(s.marketStock<60)transfer(s,b,'roast',s,'marketStock',3,p,PADS.sale);
   }
-  if(near(p,PADS.cash)||near(p,PADS.sale))transfer(s,s,'cashStock',p,'cash',Math.min(24,s.cashStock),PADS.cash,p);
-  if(s.built.smoker&&near(p,PADS.smoker)){
+  if(insidePad(p,PADS.cash,'output')||insidePad(p,PADS.sale,'market'))transfer(s,s,'cashStock',p,'cash',Math.min(24,s.cashStock),PADS.cash,p);
+  if(s.built.smoker&&insidePad(p,PADS.smoker)){
     if(s.smokeRaw<24)transfer(s,b,'roast',s,'smokeRaw',3,p,PADS.smoker);
     if(s.smokeFur<8)transfer(s,b,'fur',s,'smokeFur',1,p,PADS.smoker);
   }
-  if(s.built.smoker&&near(p,PADS.smoked)&&bagCount(p)<30)transfer(s,s,'crateStock',b,'crate',Math.min(2,30-bagCount(p)),PADS.smoked,p);
+  if(s.built.smoker&&insidePad(p,PADS.smoked,'output')&&bagCount(p)<30)transfer(s,s,'crateStock',b,'crate',Math.min(2,30-bagCount(p)),PADS.smoked,p);
 }
 function objectives(s){
   if(s.mission>=MISSIONS.length)return;

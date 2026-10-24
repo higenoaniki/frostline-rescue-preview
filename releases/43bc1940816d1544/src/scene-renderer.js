@@ -32,7 +32,7 @@ import { buildAlpineLandscape, iceOutcrop } from './alpine-landscape.js';
 import { applyPhysicalLighting } from './physical-lighting.js';
 import {GeometryBudget,geometryTierLimit} from './geometry-budget.js';
 import {loadGeometryDetail,releaseGeometryDetailsAbove} from './production-assets.js';
-import {OutlineEffect} from './vendor/OutlineEffect.js';
+import {softStudioLight} from './painted-material.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
@@ -64,10 +64,10 @@ export class ThreeGameRenderer {
     this.budget.setMode(['auto','detail','low'].includes(mode) ? mode : 'auto');
     this.renderer.shadowMap.enabled = this.profile.shadows && this.budget.mode !== 'low';
     if(toon){
-      const outline=new OutlineEffect(this.renderer,{defaultThickness:.0017,defaultColor:[.25,.29,.32],defaultAlpha:.65});
-      this.finish={resize(){},render:(scene,camera,detail)=>{outline.enabled=detail;outline.render(scene,camera);}};
+      this.finish={resize(){},render:(scene,camera)=>this.renderer.render(scene,camera)};
     }else this.finish = new CinematicPipeline(this.renderer, this.profile.antialias);
     this.scene = new THREE.Scene(); this.scene.fog = new THREE.Fog(0xc8e6ed, 3000, 5600);
+    if(toon)softStudioLight(this.scene,this.renderer);
     this.lightingReady=toon?Promise.resolve():applyPhysicalLighting(this.renderer,this.scene);
     this.camera = new THREE.OrthographicCamera(-600, 600, 900, -900, 1, 6000);
     this.art = artFactory?artFactory(this.profile):new ArtModels(this.profile); this.root = new THREE.Group(); this.scene.add(this.root);
@@ -428,7 +428,7 @@ export class ThreeGameRenderer {
     const region = regionFor(state.region);
     if (this.region !== region.id) {
       this.region = region.id; this.renderer.setClearColor(this.toon?0xe7eef3:region.sky); this.scene.fog.color.set(this.toon?0xe7eef3:region.sky); this.sun.color.set(this.toon?0xfffaf1:region.sun); this.renderer.toneMappingExposure = this.toon?1:region.exposure;
-      this.hemi.intensity = this.toon?1.2:region.id === 'highland' ? .27 : .32;
+      this.hemi.intensity = this.toon?2.1:region.id === 'highland' ? .27 : .32;
       this.highlandScenery.visible = region.id === 'highland';
     }
     this.updateCamera(state, dt);

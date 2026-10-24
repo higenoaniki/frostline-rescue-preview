@@ -1,5 +1,5 @@
 {
-  "revision": "journey-v2",
+  "revision": "journey-face-v4",
   "original": true,
   "assets": [
     "journey-basket",
@@ -11,6 +11,7 @@
     "journey-coast-player",
     "journey-coast-sister",
     "journey-coast-worker",
+    "journey-depot",
     "journey-dried",
     "journey-dryer",
     "journey-farm-merchant",
@@ -26,9 +27,11 @@
     "journey-house",
     "journey-jam",
     "journey-kelp",
+    "journey-market",
     "journey-meal",
     "journey-mill",
     "journey-orchard",
+    "journey-output-rack",
     "journey-oven",
     "journey-packing",
     "journey-preserve",
@@ -39,6 +42,8 @@
     "journey-well",
     "journey-wheel"
   ],
-  "costumes": "8 original 13-bone summer costumes; rounded face sculpts, inset almond eyes, swept hair, tailored workwear",
-  "triangles": 433496
+  "costumes": "8 native 13-bone costumes; continuous UV-painted head and eyelid expressions",
+  "facePipeline": "continuous-face-v4",
+  "materials": "12-ray baked contact shading and physical runtime materials; dedicated face albedo",
+  "triangles": 463340
 }

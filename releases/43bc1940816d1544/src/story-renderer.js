@@ -3,6 +3,8 @@ import {SnowfrontRenderer} from './snowfront-renderer.js';
 import {STORY_PADS,STORY_NAMES,storyAvailable,storyCost,storySafe} from './story-state.js';
 import {snowHeight} from './snow-landscape.js';
 import {hudOverlaps} from './world-labels.js';
+import {interactionPad} from './interaction-pad.js';
+import {paintedMaterial} from './painted-material.js';
 
 const mix=(a,b,t)=>a+(b-a)*t;
 export class StoryRenderer extends SnowfrontRenderer{
@@ -31,7 +33,7 @@ export class StoryRenderer extends SnowfrontRenderer{
     for(let i=0;i<4;i++){const cargo=this.model(i<2?'crate':'food');cargo.position.set(i%2*.5-.25,.65+Math.floor(i/2)*.35,0);this.sled.add(cargo);}
     this.scene.add(this.sled);
   }
-  part(group,geometry,color,x=0,y=0,z=0){const m=new T.Mesh(geometry,new T.MeshToonMaterial({color,gradientMap:this.gradient}));m.userData.procedural=!!this.buildingWorld;m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;group.add(m);return m;}
+  part(group,geometry,color,x=0,y=0,z=0){const m=new T.Mesh(geometry,paintedMaterial({color,vertexColors:false}));m.userData.procedural=!!this.buildingWorld;m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;group.add(m);return m;}
   prop(group,name,x,y,scale=1){const m=this.model(name);m.position.set(x,0,y);m.scale.setScalar(scale);group.add(m);return m;}
   buildWorld(s){
     // Retain authored shared mesh resources; dispose only procedural story geometry.
@@ -156,8 +158,8 @@ export class StoryRenderer extends SnowfrontRenderer{
       if(id==='bridge'&&s.chapter==='highland'&&!s.built.mine)text=`未開拓の投資枠\n木 ${s.paid.mine?.wood||0}/12 金 ${s.paid.mine?.cash||0}/36`;
       if(s.built[id]&&id.startsWith('relay'))text=STORY_NAMES[id]+'\n点灯済';
       let pad=this.storyPads.get(id);
-      if(!pad){const points=[[-1.1,0,-.85],[1.1,0,-.85],[1.1,0,.85],[-1.1,0,.85]].map(p=>new T.Vector3(...p));pad=new T.LineLoop(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:0xf9ffff}));pad.position.set(p.x,.13,p.y);pad.userData.outlineParameters={visible:false};this.scene.add(pad);this.storyPads.set(id,pad);}
-      pad.visible=!!text&&!s.built[id];pad.position.y=surface(p)+.13;pad.material.color.setHex(storyAvailable(s,id)?0xf0d276:0xf9ffff);
+      if(!pad){pad=interactionPad(['food','output'].includes(id)?'output':id==='trade'?'market':'input');pad.position.set(p.x,.13,p.y);this.scene.add(pad);this.storyPads.set(id,pad);}
+      pad.visible=!!text&&!s.built[id];pad.position.y=surface(p)+.13;pad.children[1].material.color.setHex(storyAvailable(s,id)?0xf0d276:0xf9ffff);
       if(id.startsWith('relay')&&this.waypoint===p)pad.scale.setScalar(1+Math.sin(this.visualTime*4)*.06);
       else pad.scale.setScalar(1);
       if(text){visible.add('story-'+id);if(['cook','food','forge','output','trade','weapon','armor','miner','guard'].includes(id))anchor.y-=2;if(id.startsWith('relay'))anchor.y-=3.3;this.labelAt(id,text,anchor,2.8);}

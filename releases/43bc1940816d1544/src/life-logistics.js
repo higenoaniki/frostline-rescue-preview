@@ -1,11 +1,12 @@
-import {LIFE_PADS,LIFE_DEPOT,RECIPES,CONVEYOR_ROUTE} from './life-config.js';
+import {LIFE_PADS,LIFE_DEPOT,RECIPES,CONVEYOR_ROUTE,lifeFacilityPoint,LIFE_BELT_OBSTACLE} from './life-config.js';
 import {insideRect,segmentBlocked} from './walkways.js';
 
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const newLifeWorker=(x=LIFE_DEPOT.x,y=LIFE_DEPOT.y)=>({x,y,moving:false,facing:0,load:0,item:null,phase:'idle',timer:0,route:[],job:null});
 export function lifeObstacles(s){
-  const rects=Object.keys(s.machines).filter(id=>s.built[id]).map(id=>{const p=LIFE_PADS[id];return{left:p.x-1.6,right:p.x+1.6,top:p.y+.65,bottom:p.y+4.0};});
-  if(s.built.line)rects.push({left:-11.1,right:-9.9,top:6.8,bottom:15});
+  const rects=Object.keys(s.machines).filter(id=>s.built[id]).map(id=>{const p=lifeFacilityPoint(id);return{left:p.x-1.6,right:p.x+1.6,top:p.y-1.45,bottom:p.y+1.45};});
+  if(s.built.line)rects.push({...LIFE_BELT_OBSTACLE});
+  rects.push({left:3.8,right:5.8,top:15.2,bottom:18.8});
   if(s.theme==='coast')for(const [left,right]of [[-16,-10.4],[-7.6,-4.4],[-1.6,1.6],[4.4,7.6],[10.4,16]])rects.push({left,right,top:-19,bottom:-4.4});
   return rects;
 }
@@ -25,7 +26,14 @@ export function lifeRoute(s,start,end){
 }
 function walk(s,w,target,dt){
   const key=`${target.x}:${target.y}:${JSON.stringify(s.built)}`;
-  if(w.routeKey!==key){w.route=lifeRoute(s,w,target);w.routeKey=key;}
+  if(w.routeKey!==key){
+    const obstacles=lifeObstacles(s),clear=p=>Math.abs(p.x)<15&&p.y>=-18&&p.y<=17&&!obstacles.some(o=>insideRect(p,o));
+    if(!clear(w)){
+      let exit=null;for(let radius=.25;radius<=4&&!exit;radius+=.25)for(let i=0;i<24;i++){const p={x:w.x+Math.cos(i*Math.PI/12)*radius,y:w.y+Math.sin(i*Math.PI/12)*radius};if(clear(p)){exit=p;break;}}
+      if(exit)Object.assign(w,exit);
+    }
+    w.route=lifeRoute(s,w,target);w.routeKey=key;
+  }
   const p=w.route[0];w.moving=false;if(!p)return distance(w,target)<.25;
   const d=distance(w,p),step=Math.min(d,5.6*dt);if(d>.001){w.x+=(p.x-w.x)/d*step;w.y+=(p.y-w.y)/d*step;w.facing=Math.atan2(p.y-w.y,p.x-w.x);w.moving=true;}if(d<=step+.04)w.route.shift();return distance(w,target)<.22;
 }

@@ -4,12 +4,12 @@ import {clone as cloneSkeleton} from './vendor/SkeletonUtils.js';
 import {canonicalizeProductionRig} from './production-rig.js';
 import {ArtModels} from './art-models.js';
 import {SnowfrontRenderer} from './snowfront-renderer.js';
+import {paintedMaterial,ensurePaintSurface} from './painted-material.js';
+import {productionMaterials} from './character-face.js';
 
 const native=new Map(),props=new Map();
 let loading;
-const gradient=new T.DataTexture(new Uint8Array([150,185,217,240,255]),5,1,T.RedFormat);
-gradient.minFilter=gradient.magFilter=T.NearestFilter;gradient.needsUpdate=true;
-const paint=new T.MeshToonMaterial({vertexColors:true,gradientMap:gradient});
+const paint=paintedMaterial();
 export function loadToonCampAssets(){
   return loading??=(async()=>{
     const loader=new GLTFLoader();
@@ -21,19 +21,19 @@ export function loadToonCampAssets(){
       if(!root.userData.asset)continue;let skinned=false;
       root.traverse(n=>{if(n.isBone)n.name=n.name.replace(/[_.]\d+$/,'');if(n.isSkinnedMesh)skinned=true;});
       if(skinned)canonicalizeProductionRig(root);
-      root.traverse(n=>{if(n.isMesh){n.material=paint;n.castShadow=n.receiveShadow=true;}});
+      root.traverse(n=>{if(n.isMesh){ensurePaintSurface(n.geometry);productionMaterials(n,paint);n.castShadow=n.receiveShadow=true;}});
       native.set(root.userData.asset.replace('snowfront-',''),root);
     }
     for(const root of equipment.children){
       const name=root.userData.asset;if(!name||['explorer','worker-character'].includes(name)||name.startsWith('beast-'))continue;
-      root.traverse(n=>{if(n.userData.joint)n.name=n.userData.joint;if(n.isMesh){n.material=paint;n.castShadow=n.receiveShadow=true;}});
+      root.traverse(n=>{if(n.userData.joint)n.name=n.userData.joint;if(n.isMesh){ensurePaintSurface(n.geometry);n.material=paint;n.castShadow=n.receiveShadow=true;}});
       props.set(name,root);
     }
-    document.querySelector('#game')?.setAttribute('data-art','camp-toon-v1');
+    document.querySelector('#game')?.setAttribute('data-art','camp-production-v3');
   })();
 }
 export class ToonCampArt extends ArtModels{
-  constructor(profile){super({...profile,toon:true});for(const m of Object.values(this.m))m.gradientMap=gradient;this.catalog=native;}
+  constructor(profile){super({...profile,toon:true});this.catalog=native;}
   model(name){const source=native.get(name);if(!source)throw Error('Missing toon model '+name);return source.clone(true);}
   prop(name){const source=props.get(name);if(!source)throw Error('Missing camp equipment '+name);return source.clone(true);}
   sized(name,units){const g=new T.Group(),model=this.model(name);model.scale.setScalar(units);g.add(model);return g;}

@@ -50,7 +50,6 @@ export class ArtModels {
     this.m.glass.metalness = .3; this.m.glass.roughness = .12;
     this.m.furLight.color.set(0xe9ede4); this.m.floor.color.set(0xa3b3b3);
     if(profile.toon){
-      for(const [name,material]of Object.entries(this.m))this.m[name]=new THREE.MeshToonMaterial({color:material.color,vertexColors:material.vertexColors,emissive:material.emissive,emissiveIntensity:material.emissiveIntensity});
       this.toon=true;return;
     }
     this.m.snow=terrainPbrMaterial(4);

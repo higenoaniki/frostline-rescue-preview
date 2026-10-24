@@ -38,7 +38,7 @@ export function buildFieldSurface(a) {
 }
 
 export function buildCampSurface(a) {
-  if(a.toon){const g=new THREE.Group();a.box(g,SAFE.w,12,SAFE.h,new THREE.MeshToonMaterial({color:0xd9b084}),0,26,toZ(SAFE.y+SAFE.h/2),2);return g;}
+  if(a.toon){const g=new THREE.Group();a.box(g,SAFE.w,12,SAFE.h,new THREE.MeshStandardMaterial({color:0xd9b084,roughness:.89}),0,26,toZ(SAFE.y+SAFE.h/2),2);return g;}
   const group = new THREE.Group(), geometry = new THREE.PlaneGeometry(SAFE.w, SAFE.h, 40, 58);
   geometry.rotateX(-Math.PI / 2); geometry.translate(0, 32, toZ(SAFE.y + SAFE.h / 2));
   const positions = geometry.attributes.position, colors = new Float32Array(positions.count * 3);

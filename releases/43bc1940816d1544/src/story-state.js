@@ -1,5 +1,6 @@
 import {sweptTargets} from './melee.js';
 import {PLAYER_WORLD_SPEED} from './player-movement.js';
+import {insidePad} from './interaction-pad.js';
 
 export const STORY_IDS=['pass','highland','beacon'];
 export const STORY_SPEED=PLAYER_WORLD_SPEED;
@@ -98,7 +99,7 @@ export function moveStoryActor(s,p,target,speed,dt){
 export function storyObstacles(s){return [{x:-5,y:3.5,r:1.3},{x:-2,y:3.5,r:1},{x:5,y:14,r:1.5},{x:-5,y:14,r:1},...(s.built.forge?[{x:9,y:3.5,r:1.5}]:[])];}
 export function storyCanInvest(s,id){return storySupplyRows(s,id).some(r=>r.paid<r.required&&r.carried>0);}
 export function startStoryInvestment(s,id){
-  if(s.status!=='playing'||s.player.moving||!storyAvailable(s,id)||s.blockedPad===id||!near(s.player,STORY_PADS[id==='mine'?'bridge':id])||!storyCanInvest(s,id))return false;
+  if(s.status!=='playing'||s.player.moving||!storyAvailable(s,id)||s.blockedPad===id||!insidePad(s.player,STORY_PADS[id==='mine'?'bridge':id],'investment')||!storyCanInvest(s,id))return false;
   s.investmentActive=id;return true;
 }
 export function investStory(s,id,dt){
@@ -169,14 +170,14 @@ function interactions(s,dt){
     const free=d.type==='raw'?STORY_PROVISION_LIMIT-storyProvisionCapacity(p):STORY_MATERIAL_LIMIT-storyMaterialCapacity(p);
     const n=Math.max(0,Math.min(d.amount,free));if(!n)continue;b[d.type]+=n;d.amount-=n;emit(s,'pickup',{item:d.type,count:n,x:d.x,y:d.y});if(!d.amount)s.drops.splice(s.drops.indexOf(d),1);
   }
-  s.investment=['weapon','armor','bridge','mine','forge','miner','guard','relayA','relayB','relayC'].find(id=>storyAvailable(s,id)&&near(p,STORY_PADS[id==='mine'?'bridge':id]))??null;
+  s.investment=['weapon','armor','bridge','mine','forge','miner','guard','relayA','relayB','relayC'].find(id=>storyAvailable(s,id)&&insidePad(p,STORY_PADS[id==='mine'?'bridge':id],'investment'))??null;
   if(s.player.moving||s.investmentActive!==s.investment||s.investmentActive&&!storyCanInvest(s,s.investmentActive))s.investmentActive=null;
   s.transferTimer+=dt;if(s.transferTimer<.1)return;s.transferTimer=0;
   if(s.blockedPad){const pos=STORY_PADS[s.blockedPad==='mine'?'bridge':s.blockedPad];if(!near(p,pos,1.65))s.blockedPad=null;}
   if(s.investmentActive)investStory(s,s.investmentActive,.1);
-  if(near(p,STORY_PADS.cook))deposit(s,b,'raw',s,'rawStock',3,{...p},STORY_PADS.cook);
-  if(near(p,STORY_PADS.food))deposit(s,s,'foodStock',b,'food',Math.max(0,Math.min(3,STORY_PROVISION_LIMIT-storyProvisionCapacity(p))),STORY_PADS.food,{...p});
-  if(near(p,STORY_PADS.trade)){
+  if(insidePad(p,STORY_PADS.cook))deposit(s,b,'raw',s,'rawStock',3,{...p},STORY_PADS.cook);
+  if(insidePad(p,STORY_PADS.food,'output'))deposit(s,s,'foodStock',b,'food',Math.max(0,Math.min(3,STORY_PROVISION_LIMIT-storyProvisionCapacity(p))),STORY_PADS.food,{...p});
+  if(insidePad(p,STORY_PADS.trade,'market')){
     if(s.chapter==='pass'&&s.foodDelivered<6)deposit(s,b,'food',s,'foodDelivered',6-s.foodDelivered,{...p},STORY_PADS.trade);
     else if(s.chapter==='highland'&&s.delivered<8)deposit(s,b,'kit',s,'delivered',Math.min(2,8-s.delivered),{...p},STORY_PADS.trade);
     const build=currentBuild(s),cost=build?storyCost(s,build):{},paid=s.paid[build]||{};
@@ -184,11 +185,11 @@ function interactions(s,dt){
     const type=b.raw>0?'raw':b.food>0?'food':b.wood>reserve('wood')?'wood':b.ore>reserve('ore')?'ore':null;
     if(type){const n=Math.min(3,b[type]-(['wood','ore'].includes(type)?reserve(type):0));b[type]-=n;p.cash+=n*(type==='wood'?3:type==='raw'?4:type==='ore'?5:8);emit(s,'sell',{x:p.x,y:p.y});}
   }
-  if(s.built.forge&&near(p,STORY_PADS.forge)){
+  if(s.built.forge&&insidePad(p,STORY_PADS.forge)){
     if(s.forgeWood<8)deposit(s,b,'wood',s,'forgeWood',Math.min(2,8-s.forgeWood),{...p},STORY_PADS.forge);
     if(s.forgeOre<24)deposit(s,b,'ore',s,'forgeOre',Math.min(3,24-s.forgeOre),{...p},STORY_PADS.forge);
   }
-  if(s.built.forge&&near(p,STORY_PADS.output))deposit(s,s,'kitStock',b,'kit',Math.max(0,Math.min(2,STORY_MATERIAL_LIMIT-storyMaterialCapacity(p))),STORY_PADS.output,{...p});
+  if(s.built.forge&&insidePad(p,STORY_PADS.output,'output'))deposit(s,s,'kitStock',b,'kit',Math.max(0,Math.min(2,STORY_MATERIAL_LIMIT-storyMaterialCapacity(p))),STORY_PADS.output,{...p});
 }
 function production(s,dt){
   s.cookTimer+=dt;if(s.rawStock&&s.cookTimer>=.8){s.rawStock--;s.foodStock++;s.cookTimer=0;emit(s,'cook');}

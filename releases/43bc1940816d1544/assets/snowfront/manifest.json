@@ -1,5 +1,5 @@
 {
-  "revision": "snowfront-v1",
+  "revision": "snowfront-face-v4",
   "original": true,
   "assets": [
     "snowfront-axe",
@@ -26,7 +26,8 @@
     "snowfront-wolf",
     "snowfront-worker"
   ],
-  "triangles": 237110,
+  "triangles": 247990,
   "characters": "original native skinned chibi rigs",
-  "materials": "painted vertex palette; runtime toon gradient and outline effect"
+  "materials": "12-ray contact-shaded palette; dedicated UV-painted continuous face",
+  "facePipeline": "continuous-face-v4"
 }

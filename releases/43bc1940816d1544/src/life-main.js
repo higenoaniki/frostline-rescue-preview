@@ -13,6 +13,7 @@ import {screenToWorldInput} from './player-movement.js';
 import {lifeAudio} from './life-audio.js';
 import {investmentCommand} from './investment-command.js';
 import {readDisplayMode,saveDisplayMode} from './display-settings.js';
+import {insidePad} from './interaction-pad.js';
 
 const stage=stageFor(new URLSearchParams(location.search).get('stage')),config=LIFE_STAGES[stage.id],chapter=journeyFor(stage.journey),canvas=document.querySelector('#game'),shell=document.querySelector('.shell');
 document.documentElement.classList.add('life-mode');
@@ -40,15 +41,16 @@ const outro=outcome.querySelector('.journey-dialog-body'),ending=document.create
 next.onclick=async()=>{next.disabled=true;try{await runStageBoundary({from:stage.id,to:stage.next,reason:'clear',storage:location.pathname.startsWith('/review/')?null:localStorage,save,navigate:id=>location.assign(id?stageUrl(location.href,id):menuUrl(location.href))});}catch(e){ui.notify(e.message);next.disabled=false;}};
 stay.onclick=()=>{outcome.close();state.status='playing';paused=false;stop();save();};
 const intro=makeDialog(stage.title);intro.querySelector('.journey-dialog-body').innerHTML='<small class="journey-kicker"></small><p></p><button type="button" class="journey-primary">この場所で始める</button>';intro.querySelector('small').textContent=`第${stage.chapter}章 · STAGE ${stage.local}/5 · ${chapter.outfit}`;intro.querySelector('p').textContent=stage.story;intro.querySelector('.journey-primary').onclick=()=>intro.close();intro.addEventListener('close',()=>{paused=false;stop();try{localStorage.setItem(stageSaveKey(stage.id)+'-seen','1');}catch{}});
-let seen=false;try{seen=localStorage.getItem(stageSaveKey(stage.id)+'-seen')==='1'||localStorage.getItem(`frostline-life-${stage.id}-v1-seen`)==='1';}catch{}
+let seen=false;try{seen=[3,2,1].some(v=>localStorage.getItem(`frostline-life-${stage.id}-v${v}-seen`)==='1');}catch{}
 if(!seen&&!location.pathname.startsWith('/review/')){paused=true;intro.showModal();}
 function context(){
   const p=state.player,near=(target,r=1.7)=>Math.hypot(p.x-target.x,p.y-target.y)<r;
-  if(near(LIFE_PADS.market,2))return{title:`市場 · ${LIFE_ITEMS[state.saleType]}を納入`,text:`単価 ${ITEM_PRICE[state.saleType]} · 所持 ${p.bag[state.saleType]} · 他の素材は売りません`,actions:[{label:'納入品を選ぶ',icon:'package',action:openSales}]};
+  if(insidePad(p,LIFE_PADS.market,'market'))return{title:`市場 · ${LIFE_ITEMS[state.saleType]}を納入`,text:`単価 ${ITEM_PRICE[state.saleType]} · 所持 ${p.bag[state.saleType]} · 他の素材は売りません`,actions:[{label:'納入品を選ぶ',icon:'package',action:openSales}]};
   if(state.investment){const id=state.investment,cost=config.plots[id];return{title:`区画${plotLetter(config,id)}`,text:`現金 ${state.paid[id]||0} / ${cost} · ${state.investmentActive?'投入中':p.cash?'投資待機':'現金不足'}`,actions:[investmentCommand({active:state.investmentActive===id,available:!paused&&!p.moving&&p.cash>0&&state.blockedPad!==id,start:()=>startLifeInvestment(state,id),stop:()=>{state.investmentActive=null;}})]};}
+  if(state.built.line&&near(LIFE_PADS.line,3))return{title:`搬送ライン · ${state.conveyor.length?'搬送中':'待機'}`,text:`搬送中 ${state.conveyor.length}皿 · 到着 ${state.automation.delivered}皿 · 稼働後の缶詰 ${state.automation.produced}個 / 出荷 ${state.automation.shipped}個`};
   for(const[id,m]of Object.entries(state.machines))if(state.built[id]){
-    const r=RECIPES[m.recipe];if(near(LIFE_PADS[id]))return{title:FACILITY_NAMES[id],text:Object.entries(r.input).map(([k,n])=>`${LIFE_ITEMS[k]} 在庫${m.input[k]||0}（${n}/回）`).join(' ＋ ')+` → ${LIFE_ITEMS[r.output]} · 完成${m.stock}`};
-    if(near(lifeOutputPad(id),1.2))return{title:LIFE_ITEMS[r.output]+'の回収',text:`完成 ${m.stock}${lifeCargo(state)>=36?' · 荷物がいっぱい':''}`};
+    const r=RECIPES[m.recipe];if(insidePad(p,LIFE_PADS[id]))return{title:FACILITY_NAMES[id],text:Object.entries(r.input).map(([k,n])=>`${LIFE_ITEMS[k]} 在庫${m.input[k]||0}（${n}/回）`).join(' ＋ ')+` → ${LIFE_ITEMS[r.output]} · 完成${m.stock}`};
+    if(insidePad(p,lifeOutputPad(id),'output'))return{title:LIFE_ITEMS[r.output]+'の回収',text:`完成 ${m.stock}${lifeCargo(state)>=36?' · 荷物がいっぱい':''}`};
   }
   if(state.work){const n=state.nodes.find(n=>n.id===state.work.node);return{title:state.work.type==='fishing'?'釣り上げ中':LIFE_ITEMS[n.type],text:state.work.type==='full'?'荷物がいっぱい · 加工か市場へ':state.work.type==='water'?'井戸で水をくみ、畑へ届ける':state.work.type==='growing'?`成長 ${Math.round(n.growth*100)}% · 別の畑も手入れできる`:state.work.type==='fishing'?`竿 Lv.${state.tool} · 釣果 ${state.caught}`:`収穫中 · ${n.stock}個`};}
   if(near(LIFE_DEPOT,2))return{title:'共同倉庫 · 仲間の収穫',text:Object.entries(state.store).filter(([,n])=>n>0).map(([k,n])=>`${LIFE_ITEMS[k]} ${n}`).join(' · ')||'仲間が運搬中',actions:[{label:state.automationEnabled?'仲間の作業を一時停止':'仲間の作業を再開',icon:state.automationEnabled?'pause':'play',action:()=>{state.automationEnabled=!state.automationEnabled;}}]};
@@ -57,7 +59,7 @@ function context(){
 }
 function hud(){
   const goals=lifeGoals(state),goal=goals[Math.min(state.mission,goals.length-1)],[label,target]=lifeTarget(state);renderer.waypoint=target;
-  ui.update({cash:state.player.cash,title:goal.title,count:state.completed?'CLEAR':`${state.mission+1}/${goals.length}`,progress:state.completed?1:(state.mission+goal.value/goal.target)/goals.length,hint:paused?'一時停止':`${label} · ${Math.round(Math.hypot(target.x-state.player.x,target.y-state.player.y))}m`,completed:state.completed,items:Object.entries(state.player.bag).filter(([k])=>config.resources.includes(k)||k==='water'&&config.theme==='farm'||Object.values(state.machines).some(m=>m.recipe===k)).map(([k,count])=>({label:LIFE_ITEMS[k],count})),capacity:`荷物 ${lifeCargo(state)}/36`,rows:goals.map(g=>({label:g.title,value:g.value,target:g.target})),context:context(),note:stage.story});
+  ui.update({cash:state.player.cash,title:goal.title,count:state.completed?'CLEAR':`${state.mission+1}/${goals.length}`,progress:state.completed?1:(state.mission+goal.value/goal.target)/goals.length,hint:paused?'一時停止':`${label} · ${Math.round(Math.hypot(target.x-state.player.x,target.y-state.player.y))}m`,completed:state.completed,items:Object.entries(state.player.bag).filter(([k])=>config.resources.includes(k)||k==='water'&&config.theme==='farm'||Object.values(state.machines).some(m=>m.recipe===k)).map(([k,count])=>({label:LIFE_ITEMS[k],count})),capacity:`荷物 ${lifeCargo(state)}/36`,rows:goals.map((g,i)=>({label:g.title,value:i<state.mission?g.target:g.value,target:g.target})),context:context(),note:stage.story});
   if(state.status==='won'&&!outcomeShown){outcomeShown=true;paused=true;stop();ending.textContent=stage.ending;next.textContent=stage.next?`次へ · ${stageFor(stage.next).title}`:'章・ステージ選択へ';if(!location.pathname.startsWith('/review/'))completeStage(localStorage,stage.id);save();outcome.showModal();}
 }
 document.addEventListener('keydown',e=>{if(e.target.closest('dialog,input,select'))return;const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){e.preventDefault();input.keys.add(k);audio.unlock();}});document.addEventListener('keyup',e=>input.keys.delete(e.key.toLowerCase()));document.addEventListener('pointerdown',()=>audio.unlock(),{passive:true});
@@ -67,5 +69,5 @@ function frame(t){const dt=Math.min(.2,(t-last)/1000||.016);last=t;if(!paused&&!
   if(state.work?.type==='fishing'&&state.actionTime<dt)audio.play('cast');
   audio.setActivity({paused:paused||state.status!=='playing',hidden});audio.update({x:state.player.x*100,y:state.player.y*100,moving:state.player.moving},true);hud();if(!hidden)renderer.render(state,paused?0:dt);requestAnimationFrame(frame);
 }
-renderer.focus.set(state.player.x,0,state.player.y-1);hud();renderer.render(state,0);canvas.dataset.art='journey-v2';save();window.dispatchEvent(new Event('frostline:ready'));requestAnimationFrame(frame);
+renderer.focus.set(state.player.x,0,state.player.y-1);hud();renderer.render(state,0);canvas.dataset.art='journey-production-v3';save();window.dispatchEvent(new Event('frostline:ready'));requestAnimationFrame(frame);
 export {state,renderer,hud,tickLife,saveLife,restart,ui};
